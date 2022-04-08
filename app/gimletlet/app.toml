@@ -6,7 +6,7 @@ stacksize = 896
 
 [kernel]
 name = "gimletlet"
-requires = {flash = 32768, ram = 8192}
+requires = {flash = 32768, ram = 4096}
 #
 # For the kernel (and for any task that logs), we are required to enable
 # either "itm" (denoting logging/panicking via ARM's Instrumentation Trace
@@ -104,17 +104,6 @@ priority = 3
 requires = {flash = 1024, ram = 1024}
 start = true
 task-slots = ["user_leds"]
-
-[tasks.uartecho]
-name = "task-uartecho"
-features = ["stm32h753", "usart2"]
-uses = ["usart2"]
-interrupts = {"usart2.irq" = 1}
-priority = 3
-requires = {flash = 8192, ram = 4096}
-stacksize = 2048
-start = true
-task-slots = ["sys"]
 
 [tasks.hiffy]
 name = "task-hiffy"

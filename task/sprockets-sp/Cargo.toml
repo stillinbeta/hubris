@@ -11,6 +11,8 @@ cortex-m = {version = "0.7", features = ["inline-asm"]}
 ringbuf = {path = "../../lib/ringbuf"}
 tinyvec = "1.5.1"
 userlib = {path = "../../sys/userlib", features = ["panic-messages"]}
+salty = "0.2.0"
+
 
 drv-stm32h7-usart = {path = "../../drv/stm32h7-usart", optional = true}
 sprockets-common = {path = "../../../sprockets/common"}

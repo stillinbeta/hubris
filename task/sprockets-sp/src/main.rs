@@ -11,13 +11,15 @@ use drv_stm32h7_usart as drv_usart;
 
 use drv_usart::Usart;
 use ringbuf::*;
-use tinyvec::{ArrayVec, SliceVec};
+use tinyvec::{/* ArrayVec, */ SliceVec};
 use userlib::*;
+// use salty::*;
 
 use corncobs;
-use hubpack::{deserialize, serialize, SerializedSize};
+use hubpack::{/* deserialize, */ serialize, SerializedSize};
+use sprockets_common::{random_buf /* , Ed25519PublicKey */};
 use sprockets_common::msgs::{
-    RotError, RotOp, RotRequest, RotResponse, RotResult,
+    RotError, /* RotOp, */ RotRequest, RotResponse, RotResult,
 };
 use sprockets_rot::{RotConfig, RotSprocket, RotSprocketError};
 
@@ -68,7 +70,12 @@ fn main() -> ! {
     // TODO: Prevent the need for this by using corncobs::encode_iter
     let mut rsp_buf_encoded = SliceVec::from(&mut rsp_buf_encoded_backing);
 
-    let config = RotConfig::bootstrap_for_testing();
+
+    // All certs should trace back to the same manufacturing key
+    let manufacturing_keypair = salty::Keypair::from(&random_buf());
+    // let manufacturing_public_key = Ed25519PublicKey(manufacturing_keypair.public.to_bytes());
+
+    let config = RotConfig::bootstrap_for_testing(&manufacturing_keypair);
     let mut sprocket = RotSprocket::new(config);
 
     let mut need_to_tx: Option<(&SliceVec<u8>, usize)> = None;

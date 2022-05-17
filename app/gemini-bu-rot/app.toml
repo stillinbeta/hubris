@@ -61,16 +61,9 @@ start = true
 features = ["itm"]
 stacksize = 1536
 
-[tasks.idle]
-name = "task-idle"
-priority = 7
-requires = {flash = 128, ram = 256}
-stacksize = 256
-start = true
-
 [tasks.syscon_driver]
 name = "drv-lpc55-syscon"
-priority = 2
+priority = 1
 requires = {flash = 8192, ram = 2048}
 uses = ["syscon", "anactrl", "pmc"]
 start = true
@@ -83,11 +76,40 @@ uses = ["gpio", "iocon"]
 start = true
 task-slots = ["syscon_driver"]
 
+[tasks.spi0_driver]
+path = "../../drv/lpc55-spi-server"
+name = "drv-lpc55-spi-server"
+priority = 3
+requires = {flash = 16384, ram = 4096}
+features = ["spi0"]
+uses = ["flexcomm3", "flexcomm8"]
+start = true
+interrupts = {"flexcomm8.hs_spi" = 1}
+stacksize = 1000
+task-slots = ["gpio_driver", "syscon_driver"]
+
+# Gemini has external pullups on all of these signals.
+[tasks.spi0_driver.config]
+pins = [
+# HS_SPI_MOSI = P0_26 = FUN9
+{ pin = { port = 0, pin = 26}, alt = 9, mode = "NoPull"},
+# HS_SPI_MISO = P1_3 = FUN6
+{ pin = { port = 1, pin = 3}, alt = 6, mode = "NoPull"},
+# HS_SPI_SCK = P1_2 = FUN6
+{ pin = { port = 1, pin = 2}, alt = 6, mode = "NoPull"},
+# HS_SSEL1 = P1_1 = FUN5
+{ pin = { port = 1, pin = 1}, alt = 5, mode = "NoPull"},
+# ROT_IRQ = P0_18 = FUN0
+{ pin = { port = 0, pin = 18}, alt = 0, mode = "NoPull"},
+# SP_RESET = P0_9 = FUN0
+{ pin = { port = 0, pin = 9}, alt = 0, mode = "NoPull"},
+]
+
 [tasks.user_leds]
 name = "drv-user-leds"
 features = ["lpc55"]
 priority = 4
-requires = {flash = 8192, ram = 1024}
+requires = {flash = 2048, ram = 1024}
 start = true
 task-slots = ["gpio_driver"]
 
@@ -170,28 +192,22 @@ pins = [
 ]
 spi_num = 3
 
-[tasks.ping]
-name = "task-ping"
-features = ["uart"]
-priority = 6
-requires = {flash = 8192, ram = 2048}
-start = true
-task-slots = [{peer = "pong"}, "usart_driver"]
-
-[tasks.pong]
-name = "task-pong"
-priority = 5
-requires = {flash = 8192, ram = 1024}
-start = true
-task-slots = ["user_leds"]
-
 [tasks.hiffy]
 name = "task-hiffy"
 priority = 5
 features = ["lpc55", "gpio", "spi", "spctrl"]
-requires = {flash = 32768, ram = 16384 }
+requires = {flash = 16384, ram = 16384 }
 stacksize = 2048
 start = true
 task-slots = ["gpio_driver", "swd"]
+
+[tasks.idle]
+path = "../../task/idle"
+name = "task-idle"
+priority = 6
+requires = {flash = 128, ram = 256}
+stacksize = 256
+start = true
+
 
 

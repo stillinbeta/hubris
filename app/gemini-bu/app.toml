@@ -6,7 +6,7 @@ stacksize = 896
 
 [kernel]
 name = "gemini-bu"
-requires = {flash = 32768, ram = 4096}
+requires = {flash = 32768, ram = 8192}
 #
 # For the kernel (and for any task that logs), we are required to enable
 # either "itm" (denoting logging/panicking via ARM's Instrumentation Trace
@@ -76,9 +76,9 @@ uses = ["i2c2"]
 start = true
 task-slots = ["sys", "i2c_driver"]
 
-[tasks.spd.interrupts]
-"i2c2.event" = 0b0000_0010
-"i2c2.error" = 0b0000_0010
+#[tasks.spd.interrupts]
+#"i2c2.event" = 0b0000_0010
+#"i2c2.error" = 0b0000_0010
 
 [tasks.spi2_driver]
 name = "drv-stm32h7-spi-server"
@@ -111,14 +111,14 @@ global_config = "spi4"
 [tasks.user_leds]
 name = "drv-user-leds"
 features = ["stm32h7"]
-priority = 2
+priority = 5
 requires = {flash = 2048, ram = 1024}
 start = true
 task-slots = ["sys"]
 
 [tasks.pong]
 name = "task-pong"
-priority = 3
+priority = 6
 requires = {flash = 1024, ram = 1024}
 start = true
 task-slots = ["user_leds"]
@@ -137,7 +137,7 @@ task-slots = ["sys", "hash_driver"]
 [tasks.hash_driver]
 name = "drv-stm32h7-hash-server"
 features = ["h753"]
-priority = 3
+priority = 5
 requires = {flash = 8192, ram=4096 }
 stacksize = 2048
 start = true
@@ -147,12 +147,12 @@ task-slots = ["sys"]
 
 [tasks.hiffy]
 name = "task-hiffy"
-features = ["h753", "stm32h7", "itm", "i2c", "gpio", "spi", "qspi", "hash"]
-priority = 5
+features = ["h753", "stm32h7", "itm", "i2c", "gpio", "spi", "qspi", "hash", "spi-rot"]
+priority = 7
 requires = {flash = 32768, ram = 16384 }
 stacksize = 2048
 start = true
-task-slots = ["sys", "i2c_driver", "hf", "hash_driver"]
+task-slots = ["sys", "i2c_driver", "hf", "hash_driver", "spi_rot"]
 
 [tasks.validate]
 name = "task-validate"
@@ -160,11 +160,28 @@ priority = 3
 requires = {flash = 8192, ram = 4096 }
 stacksize = 1000 
 start = true
-task-slots = ["i2c_driver"]
+
+[tasks.spi_rot]
+path = "../../drv/stm32h7-spi-rot-server"
+name = "drv-stm32h7-spi-rot-server"
+priority = 5
+requires = {flash = 8192, ram = 32768}
+stacksize = 16384
+start = true
+task-slots = ["sys", {spi_driver = "spi4_driver"}]
+
+#[tasks.validate]
+#path = "../../task/validate"
+#name = "task-validate"
+#priority = 3
+#requires = {flash = 8192, ram = 4096 }
+#stacksize = 1000 
+#start = true
+#task-slots = ["i2c_driver"]
 
 [tasks.idle]
 name = "task-idle"
-priority = 6
+priority = 8
 requires = {flash = 128, ram = 256}
 stacksize = 256
 start = true
@@ -307,3 +324,4 @@ input = {port = "E", pin = 5, af = 5}
 [config.spi.spi4.devices.rot]
 mux = "port_e"
 cs = [{port = "E", pin = 4}]
+clock_divider = "DIV256"

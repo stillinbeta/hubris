@@ -468,22 +468,18 @@ fn main() -> ! {
             // TODO: catch aborted transmissions.
             //       state == writing and ssd
 
-            // Response to a received message does not begin FIFO write until
-            // the CSn signal is de-asserted, and is not transmitted until the
+            // Messages from the RoT to SP do not begin writing to FIFOWR
+            // until the SPI bus is idle (CSn not asserted).
             // next CSn is asserted.
             if !tctx.inframe && tctx.state == TxState::Queued {
-                // XXX This never happens.
-                // When ssd fires, there are still bytes left in the read FIFO
-                // and the receive message has not been processed so there is
-                // no Tx message queued.
                 tctx.state = TxState::Writing;
                 spi.txerr_clear();
                 spi.enable_tx();
                 ringbuf_entry!(Trace::StartTx(ssa, ssd));
-                if ssa {
+                //if ssa {
                     // There is work to do now.
                     // XXX YY again = true;
-                }
+                //}
                 // assert IRQ
                 gpio.set_val(sp_irq, Value::Zero).unwrap_lite();
                 tctx.rot_irq = true;
@@ -516,6 +512,8 @@ fn main() -> ! {
 
             // If we are asserting ROT_IRQ, check for conditions to de-assert.
             if tctx.rot_irq && tctx.state == TxState::Finish {
+                let (_, _, _, txempty, _, _, _, _, _) = spi.stat();
+
                 if txempty {
                     ringbuf_entry!(Trace::Line);
                     // Note: SP is going to be edge-triggered, so this signal
@@ -528,8 +526,13 @@ fn main() -> ! {
                     tctx.rot_irq = false;
                     tctx.state = TxState::Idle;
                     ringbuf_entry!(Trace::DeassertRotIrq);
-                    spi.disable_tx();   // Ignore Tx interrupts.
-                    spi.txerr_clear();
+                    // If we have nothing to send in the next frame, then
+                    // the LPC55 will send a byte of unknown origin.
+                    spi.send_u8(0);     // write our no-op byte.
+                    spi.drain_tx();     // Throw away byte just written.
+
+                    // spi.disable_tx();   // Ignore Tx interrupts.
+                    // spi.txerr_clear();
                 } else {
                     // TODO: ssd interrupt would bring us back so we don't need
                     // to loop.

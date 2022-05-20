@@ -9,6 +9,8 @@
 use derive_idol_err::IdolError;
 use zerocopy::{AsBytes, ByteSliceMut, FromBytes, LayoutVerified, Unaligned};
 //use userlib::*;
+use hubpack::SerializedSize;
+use sprockets_common::msgs::{RotRequestV1, RotResponseV1};
 use userlib::{sys_send, FromPrimitive};
 
 #[derive(Copy, Clone, Debug, FromPrimitive, PartialEq, IdolError)]
@@ -36,11 +38,13 @@ pub enum MsgError {
 }
 
 /// Protocol version
-pub const SPI_MSG_IGNORE: u8 = 0;   // To be ignored
-pub const SPI_MSG_VERSION: u8 = 1;  // Supported message format
+pub const SPI_MSG_IGNORE: u8 = 0; // To be ignored
+pub const SPI_MSG_VERSION: u8 = 1; // Supported message format
 
 /// SPI Message types will allow for multiplexing and forward compatibility.
-#[derive(Copy,Clone,PartialEq,Eq,Debug,userlib::FromPrimitive,AsBytes)]
+#[derive(
+    Copy, Clone, PartialEq, Eq, Debug, userlib::FromPrimitive, AsBytes,
+)]
 #[repr(u8)]
 pub enum MsgType {
     Invalid = 0,
@@ -106,7 +110,8 @@ pub struct MsgHeader {
 }
 pub const SPI_HEADER_SIZE: usize = core::mem::size_of::<MsgHeader>();
 pub const MAX_SPI_MSG_PAYLOAD_SIZE: usize = 256;
-pub const SPI_BUFFER_SIZE: usize = SPI_HEADER_SIZE + MAX_SPI_MSG_PAYLOAD_SIZE;
+pub const SPI_TX_BUFFER_SIZE: usize = SPI_HEADER_SIZE + RotResponseV1::MAX_SIZE;
+pub const SPI_RX_BUFFER_SIZE: usize = SPI_HEADER_SIZE + RotRequestV1::MAX_SIZE;
 
 pub struct Msg<B> {
     header: LayoutVerified<B, MsgHeader>,

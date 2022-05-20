@@ -80,7 +80,7 @@ task-slots = ["syscon_driver"]
 path = "../../drv/lpc55-spi-server"
 name = "drv-lpc55-spi-server"
 priority = 3
-requires = {flash = 16384, ram = 4096}
+requires = {flash = 65536, ram = 4096}
 features = ["spi0"]
 uses = ["flexcomm3", "flexcomm8"]
 start = true

@@ -11,16 +11,17 @@ use drv_stm32h7_usart as drv_usart;
 
 use drv_usart::Usart;
 use ringbuf::*;
-use tinyvec::{/* ArrayVec, */ SliceVec};
+use tinyvec::SliceVec;
 use userlib::*;
 // use salty::*;
 
 use corncobs;
 use hubpack::{/* deserialize, */ serialize, SerializedSize};
-use sprockets_common::{random_buf /* , Ed25519PublicKey */};
+use sprockets_common::certificates::SerialNumber;
 use sprockets_common::msgs::{
-    RotError, /* RotOp, */ RotRequest, RotResponse, RotResult,
+    RotError, RotRequestV1, RotResponseV1, RotResultV1,
 };
+use sprockets_common::random_buf;
 use sprockets_rot::{RotConfig, RotSprocket, RotSprocketError};
 
 task_slot!(SYS, sys);
@@ -49,15 +50,15 @@ const USART_IRQ: u32 = 1;
 fn main() -> ! {
     let uart = configure_uart_device();
     let mut req_buf_backing =
-        [0u8; corncobs::max_encoded_len(RotRequest::MAX_SIZE)];
+        [0u8; corncobs::max_encoded_len(RotRequestV1::MAX_SIZE)];
 
     // This is not a COBS encoded buffer. We are using corncobs::encode_iter to
     // write bytes over tx. Therefore there is no need for the extra space
     // required for COBS.
-    let mut rsp_buf_backing = [0u8; RotResponse::MAX_SIZE];
+    let mut rsp_buf_backing = [0u8; RotResponseV1::MAX_SIZE];
 
     let mut rsp_buf_encoded_backing =
-        [0u8; corncobs::max_encoded_len(RotResponse::MAX_SIZE)];
+        [0u8; corncobs::max_encoded_len(RotResponseV1::MAX_SIZE)];
 
     // We use a SliceVec instead of an ArrayVec since the capacities returned
     // from corncobs::max_encoded_len are not necessarily fewer than 32 or
@@ -70,12 +71,13 @@ fn main() -> ! {
     // TODO: Prevent the need for this by using corncobs::encode_iter
     let mut rsp_buf_encoded = SliceVec::from(&mut rsp_buf_encoded_backing);
 
-
     // All certs should trace back to the same manufacturing key
     let manufacturing_keypair = salty::Keypair::from(&random_buf());
-    // let manufacturing_public_key = Ed25519PublicKey(manufacturing_keypair.public.to_bytes());
-
-    let config = RotConfig::bootstrap_for_testing(&manufacturing_keypair);
+    let config = RotConfig::bootstrap_for_testing(
+        &manufacturing_keypair,
+        salty::Keypair::from(&random_buf()),
+        SerialNumber(random_buf()),
+    );
     let mut sprocket = RotSprocket::new(config);
 
     let mut need_to_tx: Option<(&SliceVec<u8>, usize)> = None;
@@ -190,9 +192,10 @@ fn handle_req(
 fn bad_encoding_rsp(rsp_buf: &mut SliceVec<u8>) {
     // Make the slice large enough to write into
     rsp_buf.set_len(rsp_buf.capacity());
-    let rsp = RotResponse::V1 {
+    let rsp = RotResponseV1 {
+        version: 1,
         id: 0,
-        result: RotResult::Err(RotError::BadEncoding),
+        result: RotResultV1::Err(RotError::BadEncoding),
     };
     let size = serialize(&mut rsp_buf.as_mut_slice(), &rsp).unwrap();
 
@@ -208,17 +211,6 @@ fn decode_frame(req_buf: &mut SliceVec<u8>) -> Result<(), RotError> {
     req_buf.set_len(size);
     ringbuf_entry!(UartLog::RotRequestSize(size));
     Ok(())
-}
-
-// push as much of `data` as we can into `uart`'s TX FIFO, returning the number
-// of bytes enqueued
-fn tx_until_fifo_full(uart: &Usart, data: &[u8]) -> usize {
-    for (i, &byte) in data.iter().enumerate() {
-        if !try_tx_push(uart, byte) {
-            return i;
-        }
-    }
-    data.len()
 }
 
 // wrapper around `usart.try_tx_push()` that registers the result in our

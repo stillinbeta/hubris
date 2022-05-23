@@ -8,10 +8,10 @@
 use idol_runtime::{ClientError, Leased, LenLimit, RequestError, R, W};
 // use idol_runtime::{NotificationHandler, ClientError, Leased, RequestError, R, W};
 // TODO: This should be in drv/oxide-spi-sp-rot or some such
-use userlib::*;
-use drv_spi_api::{Spi,SpiError,CsState};
-use drv_stm32xx_sys_api as sys_api;
+use drv_spi_api::{CsState, Spi, SpiError};
 use drv_spi_msg::*;
+use drv_stm32xx_sys_api as sys_api;
+use userlib::*;
 
 task_slot!(SPI, spi_driver);
 task_slot!(SYS, sys);
@@ -19,7 +19,7 @@ const SPI_TO_ROT_DEVICE: u8 = 0;
 
 use ringbuf::*;
 
-const _ROT_IRQ: u32 = 1 << 0;   // XXX this is not plumbed yet.
+const _ROT_IRQ: u32 = 1 << 0; // XXX this is not plumbed yet.
 
 // const PACKET_MASK: u32 = 1 << 0;
 
@@ -31,7 +31,7 @@ enum Trace {
     BadProtocol(u8),
     RspLen(usize),
     SpiError(SpiError),
-    Data(u8,u8,u8,u8),
+    Data(u8, u8, u8, u8),
     Line,
 }
 ringbuf!(Trace, 32, Trace::Init);
@@ -43,7 +43,7 @@ fn main() -> ! {
     let _sys = sys_api::Sys::from(SYS.get_task_id());
 
     let mut buffer = [0; idl::INCOMING_SIZE];
-    let message = &mut [0u8; drv_spi_msg::SPI_BUFFER_SIZE];
+    let message = &mut [0u8; drv_spi_msg::SPI_RX_BUFFER_SIZE];
     let mut server = ServerImpl {
         spi,
         message: *message,
@@ -60,26 +60,28 @@ fn do_send_recv(server: &mut ServerImpl) -> Result<usize, MsgError> {
     // The server struct contains a message to be transmitted to the RoT.
     // The same buffer will hold the response from the RoT.
     ringbuf_entry!(Trace::Data(
-            server.message[0],
-            server.message[1],
-            server.message[2],
-            server.message[3]));
+        server.message[0],
+        server.message[1],
+        server.message[2],
+        server.message[3]
+    ));
     let msg = Msg::parse(&mut server.message[..]).unwrap_lite();
     if !msg.is_supported_version() {
         return Err(MsgError::BadMessageType);
     }
     ringbuf_entry!(Trace::Line);
     match msg.msgtype() {
-        MsgType::Echo | MsgType::Sprockets => {},
+        MsgType::Echo | MsgType::Sprockets => {}
         _ => {
             ringbuf_entry!(Trace::Line);
-            return Err(MsgError::BadMessageType)
-        },
+            return Err(MsgError::BadMessageType);
+        }
     }
     let xmit_len = SPI_HEADER_SIZE + msg.payload_len();
     ringbuf_entry!(Trace::Line);
 
-    if let Err(spi_error) = server.spi.write(&server.message[0..xmit_len]) { // XXX this does not return
+    if let Err(spi_error) = server.spi.write(&server.message[0..xmit_len]) {
+        // XXX this does not return
         ringbuf_entry!(Trace::SpiError(spi_error));
         return Err(MsgError::SpiServerError);
     }
@@ -111,16 +113,25 @@ fn do_send_recv(server: &mut ServerImpl) -> Result<usize, MsgError> {
 
     // Read just the header.
     // Keep CSn asserted over the two reads.
-    server.spi.lock(CsState::Asserted).map_err(|_| MsgError::SpiServerError)?;
+    server
+        .spi
+        .lock(CsState::Asserted)
+        .map_err(|_| MsgError::SpiServerError)?;
     ringbuf_entry!(Trace::Line);
     if let Err(spi_error) =
-        server.spi.read(&mut server.message[0..SPI_HEADER_SIZE]) {
-            ringbuf_entry!(Trace::SpiError(spi_error));
-            server.spi.release().unwrap_lite();
-            return Err(MsgError::SpiServerError);  // XXX don't hide this information
+        server.spi.read(&mut server.message[0..SPI_HEADER_SIZE])
+    {
+        ringbuf_entry!(Trace::SpiError(spi_error));
+        server.spi.release().unwrap_lite();
+        return Err(MsgError::SpiServerError); // XXX don't hide this information
     }
 
-    ringbuf_entry!(Trace::Data(server.message[0], server.message[1], server.message[2], server.message[3]));
+    ringbuf_entry!(Trace::Data(
+        server.message[0],
+        server.message[1],
+        server.message[2],
+        server.message[3]
+    ));
 
     let msg = Msg::parse(&mut server.message[..]).unwrap_lite();
     if !msg.is_supported_version() {
@@ -135,14 +146,18 @@ fn do_send_recv(server: &mut ServerImpl) -> Result<usize, MsgError> {
         server.spi.release().unwrap_lite();
         return Err(MsgError::BadTransferSize);
     }
-    if let Err(spi_error) = server.spi.read(&mut server.message[SPI_HEADER_SIZE..SPI_HEADER_SIZE+rlen]) {
+    if let Err(spi_error) = server
+        .spi
+        .read(&mut server.message[SPI_HEADER_SIZE..SPI_HEADER_SIZE + rlen])
+    {
         ringbuf_entry!(Trace::SpiError(spi_error));
         server.spi.release().unwrap_lite();
         return Err(MsgError::SpiServerError);
     }
     server.spi.release().unwrap_lite();
 
-    let msg = Msg::parse(&mut server.message[0..rlen+SPI_HEADER_SIZE]).unwrap_lite();
+    let msg = Msg::parse(&mut server.message[0..rlen + SPI_HEADER_SIZE])
+        .unwrap_lite();
     match msg.payload_get() {
         Err(err) => Err(err),
         Ok(buf) => Ok(buf.len()),
@@ -151,7 +166,7 @@ fn do_send_recv(server: &mut ServerImpl) -> Result<usize, MsgError> {
 
 struct ServerImpl {
     spi: drv_spi_api::SpiDevice,
-    pub message: [u8; SPI_BUFFER_SIZE],
+    pub message: [u8; SPI_RX_BUFFER_SIZE],
 }
 
 impl idl::InOrderSpiMsgImpl for ServerImpl {
@@ -164,14 +179,19 @@ impl idl::InOrderSpiMsgImpl for ServerImpl {
         sink: LenLimit<Leased<W, [u8]>, MAX_SPI_MSG_PAYLOAD_SIZE>,
     ) -> Result<[u32; 2], RequestError<MsgError>> {
         ringbuf_entry!(Trace::Line);
-        let mut msg = drv_spi_msg::Msg::parse(&mut self.message[..]).unwrap_lite();
+        let mut msg =
+            drv_spi_msg::Msg::parse(&mut self.message[..]).unwrap_lite();
 
         msg.set_version();
         msg.set_len(source.len());
         msg.set_msgtype(msgtype);
         // Read the message into our local buffer offset by the header size
         ringbuf_entry!(Trace::Line);
-        source.read_range(0..source.len(), &mut msg.payload_buf()[0..source.len()])
+        source
+            .read_range(
+                0..source.len(),
+                &mut msg.payload_buf()[0..source.len()],
+            )
             .map_err(|_| RequestError::Fail(ClientError::WentAway))?;
         ringbuf_entry!(Trace::Line);
 
@@ -205,7 +225,7 @@ impl idl::InOrderSpiMsgImpl for ServerImpl {
 //}
 
 mod idl {
-    use super::{MsgType,MsgError};
+    use super::{MsgError, MsgType};
 
     include!(concat!(env!("OUT_DIR"), "/server_stub.rs"));
 }

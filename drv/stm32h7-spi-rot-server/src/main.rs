@@ -33,6 +33,9 @@ enum Trace {
     SpiError(SpiError),
     Data(u8, u8, u8, u8),
     Line,
+    EchoMsgType,
+    SprocketsMsgType,
+    ReturnOk(MsgType, u32),
 }
 ringbuf!(Trace, 32, Trace::Init);
 
@@ -43,7 +46,8 @@ fn main() -> ! {
     let _sys = sys_api::Sys::from(SYS.get_task_id());
 
     let mut buffer = [0; idl::INCOMING_SIZE];
-    let message = &mut [0u8; drv_spi_msg::SPI_RX_BUFFER_SIZE];
+    // The larger of the two buffers.
+    let message = &mut [0u8; drv_spi_msg::SPI_RSP_BUF_SIZE];
     let mut server = ServerImpl {
         spi,
         message: *message,
@@ -71,7 +75,8 @@ fn do_send_recv(server: &mut ServerImpl) -> Result<usize, MsgError> {
     }
     ringbuf_entry!(Trace::Line);
     match msg.msgtype() {
-        MsgType::Echo | MsgType::Sprockets => {}
+        MsgType::Echo => ringbuf_entry!(Trace::EchoMsgType),
+        MsgType::Sprockets => ringbuf_entry!(Trace::SprocketsMsgType),
         _ => {
             ringbuf_entry!(Trace::Line);
             return Err(MsgError::BadMessageType);
@@ -166,7 +171,7 @@ fn do_send_recv(server: &mut ServerImpl) -> Result<usize, MsgError> {
 
 struct ServerImpl {
     spi: drv_spi_api::SpiDevice,
-    pub message: [u8; SPI_RX_BUFFER_SIZE],
+    pub message: [u8; SPI_RSP_BUF_SIZE],
 }
 
 impl idl::InOrderSpiMsgImpl for ServerImpl {
@@ -175,8 +180,8 @@ impl idl::InOrderSpiMsgImpl for ServerImpl {
         &mut self,
         _: &RecvMessage,
         msgtype: drv_spi_msg::MsgType,
-        source: LenLimit<Leased<R, [u8]>, MAX_SPI_MSG_PAYLOAD_SIZE>,
-        sink: LenLimit<Leased<W, [u8]>, MAX_SPI_MSG_PAYLOAD_SIZE>,
+        source: Leased<R, [u8]>,
+        sink: Leased<W, [u8]>,
     ) -> Result<[u32; 2], RequestError<MsgError>> {
         ringbuf_entry!(Trace::Line);
         let mut msg =
@@ -203,7 +208,10 @@ impl idl::InOrderSpiMsgImpl for ServerImpl {
         sink.write_range(0..msg.payload_len(), msg.payload_get().unwrap_lite())
             .map_err(|_| RequestError::Fail(ClientError::WentAway))?;
 
-        ringbuf_entry!(Trace::Line);
+        ringbuf_entry!(Trace::ReturnOk(
+            msg.msgtype(),
+            msg.payload_len() as u32
+        ));
         // TODO: I'd like to return a tuple of MsgType and rlen.
         Ok([msg.msgtype() as u8 as u32, msg.payload_len() as u32])
     }

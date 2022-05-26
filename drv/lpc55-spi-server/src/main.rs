@@ -427,9 +427,9 @@ fn main() -> ! {
     // Because detect/invalidate function is associated with the SPDM/Sprockets state, the
     // implementation could be here.
 
-    let mut tx = [0u8; SPI_TX_BUFFER_SIZE];
+    let mut tx = [0u8; SPI_RSP_BUF_SIZE];
     let mut tctx = &mut TxContext::new(&mut tx[..]);
-    let mut rx = [0u8; SPI_RX_BUFFER_SIZE];
+    let mut rx = [0u8; SPI_REQ_BUF_SIZE];
     let mut rctx = &mut RxContext::new(&mut rx[..]);
 
     spi.enable_rx();
@@ -679,21 +679,23 @@ fn main() -> ! {
                             MsgType::Sprockets => {
                                 ringbuf_entry!(Trace::RespondToSprockets);
                                 let rsp_buf = &mut tctx.tx[SPI_HEADER_SIZE..];
-                                let size =
-                                    match sprocket.handle(rctx.rx, rsp_buf) {
-                                        Ok(size) => {
-                                            ringbuf_entry!(
-                                                Trace::ValidSprocketsReq
-                                            );
-                                            size
-                                        }
-                                        Err(_) => {
-                                            ringbuf_entry!(
-                                                Trace::InvalidSprocketsReq
-                                            );
-                                            sprockets::bad_encoding_rsp(rsp_buf)
-                                        }
-                                    };
+                                let size = match sprocket.handle(
+                                    rmsg.payload_get().unwrap_lite(),
+                                    rsp_buf,
+                                ) {
+                                    Ok(size) => {
+                                        ringbuf_entry!(
+                                            Trace::ValidSprocketsReq
+                                        );
+                                        size
+                                    }
+                                    Err(_) => {
+                                        ringbuf_entry!(
+                                            Trace::InvalidSprocketsReq
+                                        );
+                                        sprockets::bad_encoding_rsp(rsp_buf)
+                                    }
+                                };
 
                                 tctx.enqueue_existing(MsgType::Sprockets, size);
                             }

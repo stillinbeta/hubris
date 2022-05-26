@@ -80,12 +80,12 @@ task-slots = ["syscon_driver"]
 path = "../../drv/lpc55-spi-server"
 name = "drv-lpc55-spi-server"
 priority = 3
-requires = {flash = 65536, ram = 4096}
+requires = {flash = 65536, ram = 32768}
 features = ["spi0"]
 uses = ["flexcomm3", "flexcomm8"]
 start = true
 interrupts = {"flexcomm8.hs_spi" = 1}
-stacksize = 1000
+stacksize = 16384
 task-slots = ["gpio_driver", "syscon_driver"]
 
 # Gemini has external pullups on all of these signals.

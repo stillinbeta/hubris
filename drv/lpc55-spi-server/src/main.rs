@@ -698,6 +698,7 @@ fn main() -> ! {
                                 };
 
                                 tctx.enqueue_existing(MsgType::Sprockets, size);
+                                again = true;
                             }
                             _ => {
                                 // The message received was an unknown type.

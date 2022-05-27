@@ -129,6 +129,10 @@ impl<'a, B: ByteSliceMut> Msg<B> {
         self.header.version == SPI_MSG_VERSION
     }
 
+    pub fn len(&self) -> usize {
+        SPI_HEADER_SIZE + self.payload_len()
+    }
+
     pub fn payload_len(&self) -> usize {
         ((self.header.len_msb as usize) << 8) | (self.header.len_lsb as usize)
     }

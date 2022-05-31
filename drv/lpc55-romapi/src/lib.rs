@@ -394,6 +394,18 @@ fn bootloader_tree() -> &'static BootloaderTree {
     unsafe { &*(LPC55_ROM_TABLE) }
 }
 
+const LPC55_BOOT_ROM: *const BootRom =
+    0x0300_0000 as *const BootRom;
+
+#[repr(C)]
+pub struct BootRom {
+    pub data: [u8; 0x00010000],
+}
+
+pub fn bootrom() -> &'static BootRom {
+    unsafe { &*(LPC55_BOOT_ROM) }
+}
+
 fn handle_flash_status(ret: u32) -> Result<(), FlashStatus> {
     let result = match FlashStatus::from_u32(ret) {
         Some(a) => a,
@@ -401,8 +413,8 @@ fn handle_flash_status(ret: u32) -> Result<(), FlashStatus> {
     };
 
     match result {
-        FlashStatus::Success => return Ok(()),
-        a => return Err(a),
+        FlashStatus::Success => Ok(()),
+        a => Err(a),
     }
 }
 
@@ -413,8 +425,8 @@ fn handle_skboot_status(ret: u32) -> Result<(), ()> {
     };
 
     match result {
-        SkbootStatus::Success => return Ok(()),
-        _ => return Err(()),
+        SkbootStatus::Success => Ok(()),
+        _ => Err(()),
     }
 }
 
@@ -426,8 +438,8 @@ fn handle_secure_bool(ret: u32) -> Result<(), ()> {
 
     // This looks odd in that true is also a failure
     match result {
-        SecureBool::TrackerVerified => return Ok(()),
-        _ => return Err(()),
+        SecureBool::TrackerVerified => Ok(()),
+        _ => Err(()),
     }
 }
 
@@ -438,8 +450,8 @@ fn handle_bootloader_status(ret: u32) -> Result<(), BootloaderStatus> {
     };
 
     match result {
-        BootloaderStatus::Success => return Ok(()),
-        a => return Err(a),
+        BootloaderStatus::Success => Ok(()),
+        a => Err(a),
     }
 }
 
@@ -724,8 +736,8 @@ pub fn get_cmpa_data(
 // Keep this as a sample function for now
 pub fn get_bootloader_version() -> u32 {
     let version = &bootloader_tree().version;
-    return (version.bugfix as u32)
+    (version.bugfix as u32)
         | ((version.minor as u32) << 8)
         | ((version.major as u32) << 16)
-        | ((version.name as u32) << 24);
+        | ((version.name as u32) << 24)
 }

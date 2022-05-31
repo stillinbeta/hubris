@@ -76,9 +76,9 @@ uses = ["i2c2"]
 start = true
 task-slots = ["sys", "i2c_driver"]
 
-#[tasks.spd.interrupts]
-#"i2c2.event" = 0b0000_0010
-#"i2c2.error" = 0b0000_0010
+[tasks.spd.interrupts]
+"i2c2.event" = 0b0000_0010
+"i2c2.error" = 0b0000_0010
 
 [tasks.spi2_driver]
 name = "drv-stm32h7-spi-server"
@@ -126,7 +126,7 @@ task-slots = ["user_leds"]
 [tasks.hf]
 name = "drv-gimlet-hf-server"
 features = ["h753", "hash"]
-priority = 4
+priority = 6
 requires = {flash = 16384, ram = 4096 }
 stacksize = 2048
 start = true
@@ -147,14 +147,12 @@ task-slots = ["sys"]
 
 [tasks.hiffy]
 name = "task-hiffy"
-#features = ["h753", "stm32h7", "itm", "i2c", "gpio", "spi", "qspi", "hash", "spi-rot"]
-features = ["h753", "stm32h7", "itm", "i2c", "gpio", "spi", "qspi", "hash"]
+features = ["h753", "stm32h7", "itm", "i2c", "gpio", "spi", "qspi", "hash", "spi-rot"]
 priority = 7
 requires = {flash = 32768, ram = 16384 }
 stacksize = 2048
 start = true
-#task-slots = ["sys", "i2c_driver", "hf", "hash_driver", "spi_rot"]
-task-slots = ["sys", "i2c_driver", "hf", "hash_driver"]
+task-slots = ["sys", "i2c_driver", "hf", "hash_driver", "spi_rot"]
 
 [tasks.validate]
 name = "task-validate"
@@ -162,11 +160,12 @@ priority = 3
 requires = {flash = 8192, ram = 4096 }
 stacksize = 1000 
 start = true
+task-slots = ["i2c_driver"]
 
 [tasks.spi_rot]
 name = "drv-stm32h7-spi-rot-server"
 priority = 5
-requires = {flash = 8192, ram = 32768}
+requires = {flash = 16384, ram = 32768}
 stacksize = 16384
 start = true
 task-slots = ["sys", {spi_driver = "spi4_driver"}]

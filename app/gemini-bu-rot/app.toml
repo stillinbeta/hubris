@@ -77,12 +77,11 @@ start = true
 task-slots = ["syscon_driver"]
 
 [tasks.spi0_driver]
-path = "../../drv/lpc55-spi-server"
 name = "drv-lpc55-spi-server"
-priority = 3
+priority = 4
 requires = {flash = 65536, ram = 32768}
 features = ["spi0"]
-uses = ["flexcomm3", "flexcomm8"]
+uses = ["flexcomm3", "flexcomm8", "bootrom"]
 start = true
 interrupts = {"flexcomm8.hs_spi" = 1}
 stacksize = 16384
@@ -137,29 +136,6 @@ start = true
 stacksize = 2200
 task-slots = ["syscon_driver"]
 
-[tasks.spi0_driver]
-name = "drv-lpc55-spi-server"
-priority = 4
-requires = {flash = 16384, ram = 2048}
-features = ["spi0"]
-uses = ["flexcomm3", "flexcomm8"]
-start = true
-interrupts = {"flexcomm8.hs_spi" = 1}
-stacksize = 1000
-task-slots = ["gpio_driver", "syscon_driver"]
-
-[tasks.spi0_driver.config]
-pins = [
-# HS_SPI_MOSI = P0_26 = FUN9
-{ pin = { port = 0, pin = 26}, alt = 9},
-# HS_SPI_MISO = P1_3 = FUN6
-{ pin = { port = 1, pin = 3}, alt = 6},
-# HS_SPI_SCK = P1_2 = FUN6
-{ pin = { port = 1, pin = 2}, alt = 6},
-# HS_SSEL1 = P1_1 = FUN5
-{ pin = { port = 1, pin = 1}, alt = 5},
-]
-
 [tasks.swd]
 name = "drv-lpc55-swd"
 priority = 4
@@ -202,7 +178,6 @@ start = true
 task-slots = ["gpio_driver", "swd"]
 
 [tasks.idle]
-path = "../../task/idle"
 name = "task-idle"
 priority = 6
 requires = {flash = 128, ram = 256}

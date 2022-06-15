@@ -145,10 +145,30 @@ pub enum Digimode {
     Digital = 1,
 }
 
+impl From<bool> for Digimode {
+    fn from(state: bool) -> Self {
+        if state {
+            Digimode::Digital
+        } else {
+            Digimode::Analog
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq, FromPrimitive)]
 pub enum Slew {
     Standard = 0,
     Fast = 1,
+}
+
+impl From<bool> for Slew {
+    fn from(state: bool) -> Self {
+        if state {
+            Slew::Fast
+        } else {
+            Slew::Standard
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, FromPrimitive)]
@@ -157,10 +177,30 @@ pub enum Invert {
     Enabled = 1,
 }
 
+impl From<bool> for Invert {
+    fn from(state: bool) -> Self {
+        if state {
+            Invert::Enabled
+        } else {
+            Invert::Disable
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq, FromPrimitive)]
 pub enum Opendrain {
     Normal = 0,
     Opendrain = 1,
+}
+
+impl From<bool> for Opendrain {
+    fn from(state: bool) -> Self {
+        if state {
+            Opendrain::Opendrain
+        } else {
+            Opendrain::Normal
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, FromPrimitive)]

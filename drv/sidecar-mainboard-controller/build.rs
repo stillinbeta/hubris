@@ -15,6 +15,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         fpga_regs(include_str!("sidecar_mainboard_controller.json"))?,
     )?;
 
+    fs::write(
+        out_dir.join("ignition_controller.rs"),
+        fpga_regs(include_str!("ignition_controller.json"))?,
+    )?;
+
     let ecp5_bitstream_name = match env::var("HUBRIS_BOARD")?.as_str() {
         "gimletlet-2" => "sidecar_mainboard_emulator_ecp5_evn.bit",
         "sidecar-a" => "sidecar_mainboard_controller.bit",

@@ -1,0 +1,133 @@
+{
+    "type": "addrmap",
+    "inst_name": "ignition_controller",
+    "addr_offset": 0,
+    "children": [
+        {
+            "type": "reg",
+            "inst_name": "LINK_STATUS",
+            "addr_offset": 0,
+            "regwidth": 8,
+            "min_accesswidth": 8,
+            "children": [
+                {
+                    "type": "field",
+                    "inst_name": "TARGET_STATE_VALID",
+                    "lsb": 0,
+                    "msb": 0,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "The Target state in SYSTEM_TYPE and TARGET_STATUS is valid"
+                },
+                {
+                    "type": "field",
+                    "inst_name": "LINK_DETECTED",
+                    "lsb": 1,
+                    "msb": 1,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "The receiver is locked to a transmitter."
+                }
+            ]
+        },
+        {
+            "type": "reg",
+            "inst_name": "TARGET_SYSTEM_TYPE",
+            "addr_offset": 1,
+            "regwidth": 8,
+            "min_accesswidth": 8,
+            "children": [
+                {
+                    "type": "field",
+                    "inst_name": "SYSTEM_TYPE",
+                    "lsb": 0,
+                    "msb": 7,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "The system type as advertised by the Target"
+                }
+            ]
+        },
+        {
+            "type": "reg",
+            "inst_name": "TARGET_SYSTEM_STATUS",
+            "addr_offset": 2,
+            "regwidth": 8,
+            "min_accesswidth": 8,
+            "children": [
+                {
+                    "type": "field",
+                    "inst_name": "SP_FAULT",
+                    "lsb": 0,
+                    "msb": 0,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Flag indicating an unrecoverable fault was detected by the SP"
+                },
+                {
+                    "type": "field",
+                    "inst_name": "ROT_FAULT",
+                    "lsb": 1,
+                    "msb": 1,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Flag indicating an unrecoverable fault was detected by the RoT"
+                },
+                {
+                    "type": "field",
+                    "inst_name": "POWER_FAULT_A2",
+                    "lsb": 2,
+                    "msb": 2,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Flag indicating a power fault in A2"
+                },
+                {
+                    "type": "field",
+                    "inst_name": "POWER_FAULT_A3",
+                    "lsb": 3,
+                    "msb": 3,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Flag indicating a power fault in A3"
+                },
+                {
+                    "type": "field",
+                    "inst_name": "SYSTEM_POWER_ENABLED",
+                    "lsb": 4,
+                    "msb": 4,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Flag indicating system power of the Target system is enabled"
+                },
+                {
+                    "type": "field",
+                    "inst_name": "CONTROLLER_DETECTED",
+                    "lsb": 5,
+                    "msb": 5,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Flag indicating the Target receiver is locked to at least one trasmitter"
+                }
+            ]
+        }
+    ]
+}

@@ -12,6 +12,7 @@ static COMPRESSED_BITSTREAM: &[u8] =
 include!(concat!(env!("OUT_DIR"), "/sidecar_mainboard_controller.rs"));
 
 pub mod tofino2;
+pub mod ignition;
 
 pub struct MainboardController {
     fpga: Fpga,

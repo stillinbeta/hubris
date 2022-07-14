@@ -1,0 +1,6 @@
+// Ignition Server IPC interface
+
+Interface(
+    name: "Ignition",
+    ops: {}
+)

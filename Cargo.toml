@@ -29,4 +29,3 @@ path = "sys/userlib"
 
 [patch."https://github.com/oxidecomputer/hubris".abi]
 path = "sys/abi"
-

@@ -128,6 +128,128 @@
                     "desc": "Flag indicating the Target receiver is locked to at least one trasmitter"
                 }
             ]
+        },
+        {
+            "type": "reg",
+            "inst_name": "REQUEST",
+            "addr_offset": 3,
+            "regwidth": 8,
+            "min_accesswidth": 8,
+            "children": [
+                {
+                    "type": "field",
+                    "inst_name": "KIND",
+                    "lsb": 0,
+                    "msb": 1,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Value representing the request type."
+                },
+                {
+                    "type": "field",
+                    "inst_name": "IN_PROGRESS",
+                    "lsb": 2,
+                    "msb": 2,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "A Request with the given value and argument is in progress"
+                }
+            ]
+        },
+        {
+            "type": "reg",
+            "inst_name": "RESPONSE",
+            "addr_offset": 4,
+            "regwidth": 8,
+            "min_accesswidth": 8,
+            "children": [
+                {
+                    "type": "field",
+                    "inst_name": "KIND",
+                    "lsb": 0,
+                    "msb": 2,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Value representing the response type."
+                },
+                {
+                    "type": "field",
+                    "inst_name": "VALID",
+                    "lsb": 3,
+                    "msb": 3,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "Response type and data valid"
+                }
+            ]
+        },
+        {
+            "type": "reg",
+            "inst_name": "CONTROLLER_LINK_TRANSMITTER_LOST",
+            "addr_offset": 5,
+            "regwidth": 8,
+            "min_accesswidth": 8,
+            "children": [
+                {
+                    "type": "field",
+                    "inst_name": "COUNT",
+                    "lsb": 0,
+                    "msb": 7,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "The number of times the receiver lost track of the transmitter"
+                }
+            ]
+        },
+        {
+            "type": "reg",
+            "inst_name": "CONTROLLER_LINK_PACKETS_RECEIVED",
+            "addr_offset": 6,
+            "regwidth": 8,
+            "min_accesswidth": 8,
+            "children": [
+                {
+                    "type": "field",
+                    "inst_name": "COUNT",
+                    "lsb": 0,
+                    "msb": 7,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "The number of packets received"
+                }
+            ]
+        },
+        {
+            "type": "reg",
+            "inst_name": "CONTROLLER_LINK_PACKETS_DROPPED",
+            "addr_offset": 7,
+            "regwidth": 8,
+            "min_accesswidth": 8,
+            "children": [
+                {
+                    "type": "field",
+                    "inst_name": "COUNT",
+                    "lsb": 0,
+                    "msb": 7,
+                    "reset": 0,
+                    "sw_access": "r",
+                    "se_onread": null,
+                    "se_onwrite": null,
+                    "desc": "The number of packets dropped by the frame parser"
+                }
+            ]
         }
     ]
 }

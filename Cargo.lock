@@ -952,7 +952,9 @@ dependencies = [
 name = "drv-ignition-api"
 version = "0.1.0"
 dependencies = [
+ "derive-idol-err",
  "drv-fpga-api",
+ "drv-sidecar-mainboard-controller",
  "idol",
  "idol-runtime",
  "num-traits",
@@ -966,7 +968,9 @@ version = "0.1.0"
 dependencies = [
  "build-util",
  "cfg-if",
+ "drv-fpga-api",
  "drv-ignition-api",
+ "drv-sidecar-mainboard-controller",
  "idol",
  "idol-runtime",
  "num-traits",
@@ -1211,6 +1215,7 @@ dependencies = [
 name = "drv-sidecar-mainboard-controller"
 version = "0.1.0"
 dependencies = [
+ "bitfield",
  "build-fpga-regmap",
  "build-util",
  "drv-fpga-api",

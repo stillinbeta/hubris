@@ -2,5 +2,83 @@
 
 Interface(
     name: "Ignition",
-    ops: {}
+    ops: {
+        "link_status": (
+            doc: "Return the link status for the given controller",
+            args: {
+                "id": "u8",
+            },
+            reply: Result(
+                ok: (
+                    type: "LinkStatus",
+                    recv: FromPrimitive("u8"),
+                ),
+                err: CLike("IgnitionError"),
+            ),
+        ),
+        "target": (
+            doc: "Return the Target state for the given controller",
+            args: {
+                "id": "u8",
+            },
+            reply: Result(
+                ok: (
+                    type: "Target",
+                    recv: FromPrimitive("u32"),
+                ),
+                err: CLike("IgnitionError"),
+            ),
+        ),
+        "set_request": (
+            doc: "Set the Request register for the given controller",
+            args: {
+                "id": "u8",
+                "request": (
+                    type: "Request",
+                    recv: FromPrimitive("u8"),
+                ),
+            },
+            reply: Result(
+                ok: "()",
+                err: CLike("IgnitionError"),
+            ),
+        ),
+        "response": (
+            doc: "Read the Response register for the given controller",
+            args: {
+                "id": "u8",
+            },
+            reply: Result(
+                ok: (
+                    type: "Response",
+                    recv: FromPrimitive("u8"),
+                ),
+                err: CLike("IgnitionError"),
+            ),
+        ),
+        "ping": (
+            doc: "Determine if the given target can receive requests",
+            args: {
+                "id": "u8",
+            },
+            reply: Result(
+                ok: "()",
+                err: CLike("IgnitionError"),
+            ),
+        ),
+        "set_power_state": (
+            doc: "Send a power on request via the given controller",
+            args: {
+                "id": "u8",
+                "state": (
+                    type: "PowerState",
+                    recv: FromPrimitive("u8"),
+                ),
+            },
+            reply: Result(
+                ok: "()",
+                err: CLike("IgnitionError"),
+            ),
+        ),
+    }
 )

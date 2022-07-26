@@ -6,7 +6,9 @@ edition = "2021"
 [dependencies]
 userlib = {path = "../../sys/userlib", features = ["panic-messages"]}
 ringbuf = {path = "../../lib/ringbuf" }
-drv-ignition-api = {path = "../../drv/ignition-api"}
+drv-fpga-api = {path = "../fpga-api"}
+drv-ignition-api = {path = "../ignition-api"}
+drv-sidecar-mainboard-controller = {path = "../../drv/sidecar-mainboard-controller"}
 idol-runtime = {git = "https://github.com/oxidecomputer/idolatry.git"}
 cfg-if = "1"
 num-traits = { version = "0.2.12", default-features = false }

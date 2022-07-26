@@ -6,14 +6,22 @@
 
 #![no_std]
 
-use idol_runtime::ServerDeath;
+use derive_idol_err::IdolError;
 use drv_fpga_api::FpgaError;
-use zerocopy::{AsBytes, FromBytes};
+use drv_sidecar_mainboard_controller::ignition::*;
+use idol_runtime::ServerDeath;
+use userlib::{sys_send, FromPrimitive, ToPrimitive};
+use zerocopy::AsBytes;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(
+    Copy, Clone, Debug, PartialEq, FromPrimitive, ToPrimitive, IdolError,
+)]
 pub enum IgnitionError {
     ServerDied,
     FpgaError,
+    InvalidValue,
+    Nack,
+    Timeout,
 }
 
 impl From<ServerDeath> for IgnitionError {
@@ -27,3 +35,5 @@ impl From<FpgaError> for IgnitionError {
         Self::FpgaError
     }
 }
+
+include!(concat!(env!("OUT_DIR"), "/client_stub.rs"));

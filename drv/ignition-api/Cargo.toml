@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-userlib = {path = "../../sys/userlib"}
-drv-fpga-api = {path = "../../drv/fpga-api"}
+derive-idol-err = {path = "../../lib/derive-idol-err" }
+drv-fpga-api = {path = "../fpga-api"}
+drv-sidecar-mainboard-controller = {path = "../sidecar-mainboard-controller"}
 idol-runtime = {git = "https://github.com/oxidecomputer/idolatry.git"}
 num-traits = {version = "0.2.12", default-features = false}
+userlib = {path = "../../sys/userlib"}
 zerocopy = "0.6.1"
 
 [build-dependencies]

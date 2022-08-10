@@ -63,6 +63,8 @@ impl ServerImpl {
                 .response(id)
                 .map_err(IgnitionError::from)
                 .map_err(RequestError::from)?;
+
+            hl::sleep_for(5);
         }
 
         match response {

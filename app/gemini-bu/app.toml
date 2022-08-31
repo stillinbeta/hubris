@@ -63,7 +63,7 @@ features = ["h753", "itm"]
 priority = 3
 max-sizes = {flash = 16384, ram = 16384 }
 uses = ["i2c2"]
-start = false
+start = true
 task-slots = ["sys", "i2c_driver"]
 
 [tasks.spd.interrupts]
@@ -108,7 +108,7 @@ task-slots = ["sys"]
 
 [tasks.pong]
 name = "task-pong"
-priority = 6
+priority = 8
 max-sizes = {flash = 1024, ram = 1024}
 start = true
 task-slots = ["user_leds"]
@@ -137,15 +137,15 @@ task-slots = ["sys"]
 
 [tasks.hiffy]
 name = "task-hiffy"
-features = ["h753", "stm32h7", "itm", "i2c", "gpio", "spi", "qspi", "hash", "spi-rot"]
+features = ["h753", "stm32h7", "itm", "i2c", "gpio", "spi", "qspi", "hash", "sprot"]
 priority = 7
 max-sizes = {flash = 32768, ram = 16384 }
 stacksize = 2048
 start = true
-task-slots = ["sys", "i2c_driver", "hf", "hash_driver", "spi_rot"]
+task-slots = ["sys", "i2c_driver", "hf", "hash_driver", "sprot"]
 
-[tasks.spi_rot]
-name = "drv-stm32h7-spi-rot-server"
+[tasks.sprot]
+name = "drv-stm32h7-sprot-server"
 priority = 5
 max-sizes = {flash = 16384, ram = 32768}
 stacksize = 16384
@@ -162,10 +162,28 @@ task-slots = ["i2c_driver"]
 
 [tasks.idle]
 name = "task-idle"
-priority = 8
+priority = 9
 max-sizes = {flash = 128, ram = 256}
 stacksize = 256
 start = true
+
+[tasks.rng_driver]
+features = ["h753"]
+name = "drv-stm32h7-rng"
+priority = 6
+max-sizes = {flash = 8192, ram = 512}
+uses = ["rng"]
+start = true
+stacksize = 256
+task-slots = ["sys", "user_leds"]
+
+[tasks.update_server]
+name = "stm32h7-update-server"
+priority = 3
+max-sizes = {flash = 16384, ram = 4096}
+stacksize = 2048
+start = true
+uses = ["flash_controller", "bank2"]
 
 [config]
 [[config.i2c.controllers]]
@@ -306,3 +324,8 @@ input = {port = "E", pin = 5, af = 5}
 mux = "port_e"
 cs = [{port = "E", pin = 4}]
 clock_divider = "DIV256"
+
+[config.sprot]
+# ROT_IRQ (af=0 for GPIO, af=15 when EXTI is implemneted)
+# {port = "D", pins = [0], af = 0},
+rot_irq = { port = "E", pin = 3, af = 0}

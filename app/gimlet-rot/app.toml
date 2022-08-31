@@ -21,7 +21,7 @@ stacksize = 1536
 [tasks.hiffy]
 name = "task-hiffy"
 priority = 5
-features = ["lpc55", "gpio", "spctrl"]
+features = ["lpc55", "gpio", "spctrl", "spi"]
 max-sizes = {flash = 32768, ram = 16384 }
 stacksize = 2048
 start = true
@@ -29,7 +29,7 @@ task-slots = ["gpio_driver", "swd"]
 
 [tasks.idle]
 name = "task-idle"
-priority = 6
+priority = 7
 max-sizes = {flash = 128, ram = 256}
 stacksize = 256
 start = true
@@ -65,8 +65,17 @@ pins = [
 { pin = { port = 0, pin = 30}, alt = 1}
 ]
 
+[tasks.rng_driver]
+name = "drv-lpc55-rng"
+priority = 4
+max-sizes = {flash = 16384, ram = 4096}
+uses = ["rng", "pmc"]
+start = true
+stacksize = 2200
+task-slots = ["syscon_driver"]
+
 [tasks.spi0_driver]
-name = "drv-lpc55-spi-server"
+name = "drv-lpc55-sprot-server"
 priority = 4
 max-sizes = {flash = 16384, ram = 4096}
 uses = ["iocon", "flexcomm3", "flexcomm8"]
@@ -86,6 +95,8 @@ pins = [
 { pin = { port = 1, pin = 2}, alt = 6},
 # HS_SSEL1 = P1_1 = FUN5
 { pin = { port = 1, pin = 1}, alt = 5},
+{ name = "ROT_IRQ", pin = { port = 0, pin = 18}, alt = 0, mode = "NoPull", direction = "output"},
+{ name = "SP_RESET", pin = { port = 0, pin = 9}, alt = 0, mode = "NoPull", direction = "input"},
 ]
 
 [tasks.swd]

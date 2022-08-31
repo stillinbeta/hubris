@@ -16,6 +16,9 @@ impl From<&'static device::spi0::RegisterBlock> for Spi {
     }
 }
 
+// TODO: Update upstream to include the HW register that holds this constant.
+pub const FIFOWR_SIZE: usize = 8;
+
 #[repr(u32)]
 pub enum TxLvl {
     TxEmpty = 0,
@@ -175,6 +178,7 @@ impl Spi {
     }
 
     pub fn ssd_enable(&mut self) {
+        // Only written ones have effect.
         self.reg.intenset.write(|w| w.ssden().enabled());
     }
 
@@ -188,7 +192,7 @@ impl Spi {
     }
 
     pub fn mstidle_enable(&mut self) {
-        self.reg.intenset.modify(|_, w| w.mstidleen().set_bit());
+        self.reg.intenset.write(|w| w.mstidleen().set_bit());
     }
 
     pub fn mstidle_disable(&mut self) {
@@ -226,10 +230,7 @@ impl Spi {
         len_bits: u8,
     ) {
         // SPI hardware only supports lengths of range 4-16 bits
-        if !(4..=16).contains(&len_bits) {
-            panic!()
-        }
-
+        assert!((4..=16).contains(&len_bits));
         self.reg.fifowr.write(|w| unsafe {
             w.len()
                 // Data length, per NXP docs:
@@ -256,33 +257,18 @@ impl Spi {
         self.reg.fifointstat.read().bits()
     }
 
-    // 35.6.8 SPI interrupt status register
-    // Reading this register clears the interrupt conditions.
-    //
-    // Slave select assert - set on transitions from de-asserted to asserted.
-    // Slave select de-assert - set on transitions from asserted to de-asserted.
-    // Master idle status flag - true when master function is fully idle.
-    pub fn intstat(&self) -> (bool, bool, bool) {
-        let stat = self.reg.intstat.read();
-        (stat.ssa().bits(), stat.ssd().bits(), stat.mstidle().bits())
+    /// Destructive read of SPI Interrupt Status Register.
+    /// Slave select assert - set on transitions from de-asserted to asserted.
+    /// Slave select de-assert - set on transitions from asserted to de-asserted.
+    /// Master idle status flag - true when master function is fully idle.
+    // N.B. Reading this register clears the interrupt conditions.
+    // NXP Document UM11126 35.6.8 SPI interrupt status register
+    pub fn intstat(&self) -> device::spi0::intstat::R {
+        self.reg.intstat.read()
     }
 
-    pub fn stat(
-        &mut self,
-    ) -> (bool, bool, bool, bool, bool, bool, bool, u8, u8) {
-        let stat = self.reg.fifostat.read();
-        (
-            stat.txerr().bits(),
-            stat.rxerr().bits(),
-            stat.perint().bits(),
-            stat.txempty().bits(),
-            stat.txnotfull().bits(),
-            stat.rxnotempty().bits(),
-            stat.rxfull().bits(),
-            stat.txlvl().bits() as u8,
-            stat.rxlvl().bits() as u8,
-        )
-        // self.reg.fiford.read().rxdata().bits() as u8
+    pub fn fifostat(&mut self) -> device::spi0::fifostat::R {
+        self.reg.fifostat.read()
     }
 
     pub fn txerr_clear(&mut self) {
@@ -298,30 +284,6 @@ impl Spi {
         // "This flag will be 1 if this is the first data after the
         // SSELs went from de-asserted to asserted"
         self.reg.fiford.read().rxdata().bits() as u8
-    }
-
-    pub fn check_u8_csn_sot(&mut self) -> (u8, bool, bool) {
-        // TODO Do something with the Start of Transfer Flag?
-        // "This flag will be 1 if this is the first data after the
-        // SSELs went from de-asserted to asserted"
-        let rd = self.reg.fifordnopop.read();
-        (
-            rd.rxdata().bits() as u8,
-            rd.rxssel1_n().bits(),
-            rd.sot().bits(),
-        )
-    }
-
-    pub fn read_u8_csn_sot(&mut self) -> (u8, bool, bool) {
-        // TODO Do something with the Start of Transfer Flag?
-        // "This flag will be 1 if this is the first data after the
-        // SSELs went from de-asserted to asserted"
-        let rd = self.reg.fiford.read();
-        (
-            rd.rxdata().bits() as u8,
-            rd.rxssel1_n().bits(),
-            rd.sot().bits(),
-        )
     }
 
     pub fn read_u16(&mut self) -> u16 {

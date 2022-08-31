@@ -112,7 +112,7 @@ stacksize = 2200
 task-slots = ["syscon_driver"]
 
 [tasks.spi0_driver]
-name = "drv-lpc55-spi-server"
+name = "drv-lpc55-sprot-server"
 priority = 4
 max-sizes = {flash = 16384, ram = 4096}
 features = ["spi0"]

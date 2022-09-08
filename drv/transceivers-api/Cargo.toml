@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-derive-idol-err = { path = "../../lib/derive-idol-err" }
-userlib = { path = "../../sys/userlib" }
-num-traits = { version = "0.2.12", default-features = false }
+derive-idol-err = {path = "../../lib/derive-idol-err"}
+idol-runtime = {git = "https://github.com/oxidecomputer/idolatry.git"}
+userlib = {path = "../../sys/userlib"}
+num-traits = {version = "0.2.12", default-features = false}
 zerocopy = "0.6.1"
 
 [build-dependencies]
-idol = { git = "https://github.com/oxidecomputer/idolatry.git" }
+idol = {git = "https://github.com/oxidecomputer/idolatry.git"}

@@ -18,6 +18,9 @@ cfg_if::cfg_if! {
     } else if #[cfg(target_board = "psc-a")] {
         mod psc_a;
         pub use psc_a::*;
+    } else if #[cfg(target_board = "psc-b")] {
+        mod psc_b;
+        pub use psc_b::*;
     } else if #[cfg(target_board = "gimletlet-1")] {
         mod gimletlet_mgmt;
         pub use gimletlet_mgmt::*;

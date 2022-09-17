@@ -4,15 +4,22 @@ Interface(
     name: "Ignition",
     ops: {
         "state": (
-            doc: "Return the state of the given controller",
+            doc: "Return the state for the given controller",
             args: {
                 "id": "u8",
             },
             reply: Result(
-                ok: (
-                    type: "Target",
-                    recv: FromPrimitive("u64"),
-                ),
+                ok: "u64",
+                err: CLike("IgnitionError"),
+            ),
+        ),
+        "counters": (
+            doc: "Return the Controller counters for the given controller",
+            args: {
+                "id": "u8",
+            },
+            reply: Result(
+                ok: "u32",
                 err: CLike("IgnitionError"),
             ),
         ),

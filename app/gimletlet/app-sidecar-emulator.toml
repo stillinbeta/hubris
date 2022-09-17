@@ -19,9 +19,6 @@ requires = {flash = 32768, ram = 4096}
 #
 features = ["itm"]
 
-[supervisor]
-notification = 1
-
 [tasks.jefe]
 name = "task-jefe"
 priority = 0
@@ -38,13 +35,13 @@ request_reset = ["hiffy"]
 name = "drv-stm32xx-sys"
 features = ["h753"]
 priority = 1
-max-sizes = {flash = 8192, ram = 1024}
+max-sizes = {flash = 2048, ram = 1024}
 uses = ["rcc", "gpios1", "gpios2", "gpios3"]
 start = true
 task-slots = ["jefe"]
 
 [tasks.i2c_driver]
-name = "drv-stm32h7-i2c-server"
+name = "drv-stm32xx-i2c-server"
 features = ["h753", "itm"]
 priority = 2
 max-sizes = {flash = 16384, ram = 2048}

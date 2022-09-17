@@ -93,6 +93,17 @@ impl idl::InOrderIgnitionImpl for ServerImpl {
             .map_err(IgnitionError::from)
             .map_err(RequestError::from)
     }
+
+    fn counters(
+        &mut self,
+        _: &userlib::RecvMessage,
+        id: u8,
+    ) -> Result<u32, RequestError> {
+        self.controller
+            .counters(id)
+            .map_err(IgnitionError::from)
+            .map_err(RequestError::from)
+    }
 }
 
 mod idl {

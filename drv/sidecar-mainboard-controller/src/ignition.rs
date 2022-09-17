@@ -56,8 +56,12 @@ impl IgnitionController {
     }
 
     pub fn state(&self, id: u8) -> Result<u64, FpgaError> {
-        let v: u64 = self.read_raw::<Addr, u64>(id, Addr::CONTROLLER_STATUS)?;
+        let v: u64 = self.read_raw::<u16, u64>(id, 0x0)?;
         Ok(v & 0x0000ffffffffffff)
+    }
+
+    pub fn counters(&self, id: u8) -> Result<u32, FpgaError> {
+        self.read_raw::<u16, u32>(id, 0x10)
     }
 }
 

@@ -254,7 +254,8 @@ task-slots = [
     "sys",
     "i2c_driver",
     {mainboard = "ecp5_mainboard"},
-    {front_io = "ecp5_front_io"}]
+#    {front_io = "ecp5_front_io"}]
+    ]
 
 [tasks.thermal]
 name = "task-thermal"

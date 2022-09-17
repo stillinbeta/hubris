@@ -30,6 +30,10 @@ impl MainboardController {
         }
     }
 
+    pub fn reset_fpga(&mut self) -> Result<(), FpgaError> {
+        self.fpga.reset()
+    }
+
     /// Poll the device state of the FPGA to determine if it is ready to receive
     /// a bitstream, resetting the device if needed.
     pub fn await_fpga_ready(

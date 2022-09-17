@@ -55,54 +55,9 @@ impl IgnitionController {
         self.fpga.write(WriteOp::Write, self.addr(id, addr), value)
     }
 
-    pub fn link_status(&self, id: u8) -> Result<LinkStatus, FpgaError> {
-        self.read_raw(id, Addr::LINK_STATUS).map(LinkStatus)
-    }
-
-    pub fn target(&self, id: u8) -> Result<Target, FpgaError> {
-        let v: u32 = self.read_raw::<Addr, u32>(id, Addr::LINK_STATUS)?;
-        Ok(Target(v & 0x00ffffff))
-    }
-
-    pub fn request(&self, id: u8) -> Result<Request, FpgaError> {
-        self.read_raw(id, Addr::REQUEST).map(Request)
-    }
-
-    pub fn set_request(&self, id: u8, r: Request) -> Result<(), FpgaError> {
-        self.write_raw(id, Addr::REQUEST, r)
-    }
-
-    pub fn response(&self, id: u8) -> Result<Response, FpgaError> {
-        self.read_raw(id, Addr::RESPONSE).map(Response)
-    }
-
-    pub fn ping(&self, id: u8) -> Result<(), FpgaError> {
-        self.set_request(id, Request(0))
-    }
-
-    pub fn power_state(&self, id: u8) -> Result<Option<PowerState>, FpgaError> {
-        Ok(self.target(id)?.power_state())
-    }
-
-    pub fn set_power_state(
-        &self,
-        id: u8,
-        power_state: PowerState,
-    ) -> Result<(), FpgaError> {
-        self.set_request(id, Request::from(power_state))
-    }
-
-    pub fn read_controller_counter(
-        &self,
-        id: u8,
-        counter: Counter,
-    ) -> Result<usize, FpgaError> {
-        let v: u8 = self.read_raw(
-            id,
-            u16::from(Addr::CONTROLLER_LINK_TRANSMITTER_LOST)
-                + (counter as u16),
-        )?;
-        Ok(v as usize)
+    pub fn state(&self, id: u8) -> Result<u64, FpgaError> {
+        let v: u64 = self.read_raw::<Addr, u64>(id, Addr::CONTROLLER_STATUS)?;
+        Ok(v & 0x0000ffffffffffff)
     }
 }
 

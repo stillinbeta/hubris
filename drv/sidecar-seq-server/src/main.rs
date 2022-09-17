@@ -8,6 +8,7 @@
 #![no_main]
 
 use crate::clock_generator::ClockGenerator;
+#[cfg(feature = "front_io")]
 use crate::front_io::FrontIOBoard;
 use crate::tofino::Tofino;
 use drv_fpga_api::{DeviceState, FpgaError, WriteOp};
@@ -23,11 +24,13 @@ use userlib::*;
 
 task_slot!(I2C, i2c_driver);
 task_slot!(MAINBOARD, mainboard);
+#[cfg(feature = "front_io")]
 task_slot!(FRONT_IO, front_io);
 
 include!(concat!(env!("OUT_DIR"), "/i2c_config.rs"));
 
 mod clock_generator;
+#[cfg(feature = "front_io")]
 mod front_io;
 mod tofino;
 
@@ -85,6 +88,7 @@ struct ServerImpl {
     mainboard_controller: MainboardController,
     clock_generator: ClockGenerator,
     tofino: Tofino,
+    #[cfg(feature = "front_io")]
     front_io_board: FrontIOBoard,
 }
 
@@ -224,22 +228,40 @@ impl idl::InOrderSequencerImpl for ServerImpl {
         Ok(self.clock_generator.config_loaded)
     }
 
-    fn front_io_board_present(
-        &mut self,
-        _: &RecvMessage,
-    ) -> Result<bool, RequestError<SeqError>> {
-        Ok(self.front_io_board.present())
-    }
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "front_io")] {
+            fn front_io_board_present(
+                &mut self,
+                _: &RecvMessage,
+            ) -> Result<bool, RequestError<SeqError>> {
+                Ok(self.front_io_board.present())
+            }
 
-    fn front_io_phy_ready(
-        &mut self,
-        _: &RecvMessage,
-    ) -> Result<bool, RequestError<SeqError>> {
-        if !self.front_io_board.present() {
-            Err(SeqError::NoFrontIOBoard.into())
+            fn front_io_phy_ready(
+                &mut self,
+                _: &RecvMessage,
+            ) -> Result<bool, RequestError<SeqError>> {
+                if !self.front_io_board.present() {
+                    Err(SeqError::NoFrontIOBoard.into())
+                } else {
+                    let phy_smi = self.front_io_board.phy_smi();
+                    Ok(phy_smi.phy_powered_up_and_ready().map_err(SeqError::from)?)
+                }
+            }
         } else {
-            let phy_smi = self.front_io_board.phy_smi();
-            Ok(phy_smi.phy_powered_up_and_ready().map_err(SeqError::from)?)
+            fn front_io_board_present(
+                &mut self,
+                _: &RecvMessage,
+            ) -> Result<bool, RequestError<SeqError>> {
+                Ok(false)
+            }
+
+            fn front_io_phy_ready(
+                &mut self,
+                _: &RecvMessage,
+            ) -> Result<bool, RequestError<SeqError>> {
+                Err(SeqError::NoFrontIOBoard.into())
+            }
         }
     }
 }
@@ -280,17 +302,30 @@ fn main() -> ! {
         MainboardController::new(MAINBOARD.get_task_id());
     let clock_generator = ClockGenerator::new(I2C.get_task_id());
     let tofino = Tofino::new(I2C.get_task_id());
-    let front_io_board =
-        FrontIOBoard::new(FRONT_IO.get_task_id(), I2C.get_task_id());
 
-    let mut server = ServerImpl {
-        mainboard_controller,
-        clock_generator,
-        tofino,
-        front_io_board,
-    };
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "front_io")] {
+            let front_io_board =
+                FrontIOBoard::new(FRONT_IO.get_task_id(), I2C.get_task_id());
+
+            let mut server = ServerImpl {
+                mainboard_controller,
+                clock_generator,
+                tofino,
+                front_io_board,
+            };
+        } else {
+            let mut server = ServerImpl {
+                mainboard_controller,
+                clock_generator,
+                tofino,
+            };
+        }
+    }
 
     ringbuf_entry!(Trace::FpgaInit);
+
+    server.mainboard_controller.reset_fpga().unwrap();
 
     match server
         .mainboard_controller
@@ -348,23 +383,29 @@ fn main() -> ! {
     ringbuf_entry!(Trace::ClockConfigurationComplete);
 
     // Initialize a connected Front IO board.
-    if server.front_io_board.present() {
-        ringbuf_entry!(Trace::FrontIOBoardPresent);
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "front_io")] {
+            if server.front_io_board.present() {
+                ringbuf_entry!(Trace::FrontIOBoardPresent);
 
-        if !server.front_io_board.init().unwrap() {
-            panic!();
+                if !server.front_io_board.init().unwrap() {
+                    panic!();
+                }
+
+                let phy_smi = server.front_io_board.phy_smi();
+                phy_smi.set_phy_power_enabled(true).unwrap();
+
+                while !phy_smi.phy_powered_up_and_ready().unwrap() {
+                    userlib::hl::sleep_for(10);
+                }
+
+                ringbuf_entry!(Trace::FrontIOVsc8562Ready);
+            } else {
+                ringbuf_entry!(Trace::NoFrontIOBoardPresent);
+            }
+        } else {
+            ringbuf_entry!(Trace::NoFrontIOBoardPresent);
         }
-
-        let phy_smi = server.front_io_board.phy_smi();
-        phy_smi.set_phy_power_enabled(true).unwrap();
-
-        while !phy_smi.phy_powered_up_and_ready().unwrap() {
-            userlib::hl::sleep_for(10);
-        }
-
-        ringbuf_entry!(Trace::FrontIOVsc8562Ready);
-    } else {
-        ringbuf_entry!(Trace::NoFrontIOBoardPresent);
     }
 
     //

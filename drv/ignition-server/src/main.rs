@@ -43,6 +43,7 @@ struct ServerImpl {
 }
 
 impl ServerImpl {
+    /*
     fn set_request_read_response(
         &self,
         id: u8,
@@ -76,95 +77,21 @@ impl ServerImpl {
             _ => Err(RequestError::from(IgnitionError::Timeout)),
         }
     }
+    */
 }
 
 type RequestError = idol_runtime::RequestError<IgnitionError>;
 
 impl idl::InOrderIgnitionImpl for ServerImpl {
-    fn link_status(
+    fn state(
         &mut self,
         _: &userlib::RecvMessage,
         id: u8,
-    ) -> Result<LinkStatus, RequestError> {
+    ) -> Result<u64, RequestError> {
         self.controller
-            .link_status(id)
+            .state(id)
             .map_err(IgnitionError::from)
             .map_err(RequestError::from)
-    }
-
-    fn target(
-        &mut self,
-        _: &userlib::RecvMessage,
-        id: u8,
-    ) -> Result<Target, RequestError> {
-        let t = self
-            .controller
-            .target(id)
-            .map_err(IgnitionError::from)
-            .map_err(RequestError::from)?;
-        ringbuf_entry!(Trace::ReadTarget(id, t));
-        Ok(t)
-    }
-
-    /*
-    fn request(
-        &mut self,
-        _: &userlib::RecvMessage,
-        id: u8,
-    ) -> Result<Request, RequestError> {
-        let r = self
-            .controller
-            .request(id)
-            .map_err(IgnitionError::from)
-            .map_err(RequestError::from)?;
-        ringbuf_entry!(Trace::ReadRequest(id, r));
-        Ok(r)
-    }
-    */
-
-    fn response(
-        &mut self,
-        _: &userlib::RecvMessage,
-        id: u8,
-    ) -> Result<Response, RequestError> {
-        let r = self
-            .controller
-            .response(id)
-            .map_err(IgnitionError::from)
-            .map_err(RequestError::from)?;
-        ringbuf_entry!(Trace::ReadResponse(id, r));
-        Ok(r)
-    }
-
-    fn set_request(
-        &mut self,
-        _: &userlib::RecvMessage,
-        id: u8,
-        request: Request,
-    ) -> Result<(), RequestError> {
-        ringbuf_entry!(Trace::SetRequest(id, request));
-        self.controller
-            .set_request(id, request)
-            .map_err(IgnitionError::from)
-            .map_err(RequestError::from)
-    }
-
-    fn ping(
-        &mut self,
-        _: &userlib::RecvMessage,
-        id: u8,
-    ) -> Result<(), RequestError> {
-        self.set_request_read_response(id, Request(0))
-    }
-
-    fn set_power_state(
-        &mut self,
-        _: &userlib::RecvMessage,
-        id: u8,
-        state: PowerState,
-    ) -> Result<(), RequestError> {
-        ringbuf_entry!(Trace::SetPowerState(id, state));
-        self.set_request_read_response(id, Request::from(state))
     }
 }
 

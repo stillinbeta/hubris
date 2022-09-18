@@ -18,11 +18,6 @@ task_slot!(FPGA, fpga);
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum Trace {
     None,
-    ReadTarget(u8, Target),
-    ReadRequest(u8, Request),
-    SetRequest(u8, Request),
-    ReadResponse(u8, Response),
-    SetPowerState(u8, PowerState),
 }
 ringbuf!(Trace, 16, Trace::None);
 
@@ -98,9 +93,32 @@ impl idl::InOrderIgnitionImpl for ServerImpl {
         &mut self,
         _: &userlib::RecvMessage,
         id: u8,
-    ) -> Result<u32, RequestError> {
+    ) -> Result<[u8; 4], RequestError> {
         self.controller
             .counters(id)
+            .map_err(IgnitionError::from)
+            .map_err(RequestError::from)
+    }
+
+    fn request(
+        &mut self,
+        _: &userlib::RecvMessage,
+        id: u8,
+    ) -> Result<u8, RequestError> {
+        self.controller
+            .request(id)
+            .map_err(IgnitionError::from)
+            .map_err(RequestError::from)
+    }
+
+    fn set_request(
+        &mut self,
+        _: &userlib::RecvMessage,
+        id: u8,
+        request: Request,
+    ) -> Result<(), RequestError> {
+        self.controller
+            .set_request(id, request)
             .map_err(IgnitionError::from)
             .map_err(RequestError::from)
     }

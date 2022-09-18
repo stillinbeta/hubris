@@ -57,11 +57,19 @@ impl IgnitionController {
 
     pub fn state(&self, id: u8) -> Result<u64, FpgaError> {
         let v: u64 = self.read_raw::<u16, u64>(id, 0x0)?;
-        Ok(v & 0x0000ffffffffffff)
+        Ok(v & 0x00ffffffffffffff)
     }
 
-    pub fn counters(&self, id: u8) -> Result<u32, FpgaError> {
-        self.read_raw::<u16, u32>(id, 0x10)
+    pub fn counters(&self, id: u8) -> Result<[u8; 4], FpgaError> {
+        self.read_raw::<u16, [u8; 4]>(id, 0x10)
+    }
+
+    pub fn request(&self, id: u8) -> Result<u8, FpgaError> {
+        self.read_raw::<u16, u8>(id, 0x8)
+    }
+
+    pub fn set_request(&self, id: u8, request: Request) -> Result<(), FpgaError> {
+        self.write_raw::<u16, u8>(id, 0x8, request.to_u8().unwrap_or(0))
     }
 }
 
@@ -138,48 +146,17 @@ bitfield! {
     Copy, Clone, Debug, PartialEq, FromPrimitive, ToPrimitive, AsBytes,
 )]
 #[repr(u8)]
-pub enum PowerState {
-    Off = 0,
-    On = 1,
-}
-
-bitfield! {
-    #[derive(Copy, Clone, Debug, PartialEq, FromPrimitive, ToPrimitive, FromBytes, AsBytes)]
-    #[repr(C)]
-    pub struct Request(u8);
-    pub kind, set_kind: 1, 0;
-    pub pending, _: 2;
-}
-
-impl From<PowerState> for Request {
-    fn from(state: PowerState) -> Self {
-        match state {
-            PowerState::On => Request(0x01),
-            PowerState::Off => Request(0x02),
-        }
-    }
-}
-
-impl Default for Request {
-    fn default() -> Self {
-        Self(0)
-    }
-}
-
-bitfield! {
-    #[derive(Copy, Clone, Debug, PartialEq, FromPrimitive, ToPrimitive, FromBytes, AsBytes)]
-    #[repr(C)]
-    pub struct Response(u8);
-    pub kind, _: 2, 0;
-    pub valid, _: 3;
+pub enum Request {
+    SystemPowerOff = 1,
+    SystemPowerOn = 2,
+    SystemReset = 3,
 }
 
 #[derive(
     Copy, Clone, Debug, PartialEq, FromPrimitive, ToPrimitive, AsBytes,
 )]
 #[repr(u8)]
-pub enum Counter {
-    TransmitterLost = 0,
-    PacketsReceived = 1,
-    PacketsDropped = 2,
+pub enum PowerState {
+    Off = 0,
+    On = 1,
 }

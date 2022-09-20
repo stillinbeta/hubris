@@ -15,18 +15,20 @@ use userlib::*;
 
 cfg_if::cfg_if! {
     if #[cfg(target_board="sidecar-a")] {
-        const MEMORY_SIZE: u32 = 16 << 20; // 16 MiB
-        const SLOT_COUNT: u32 = 8;
-        const SLOT_SIZE: usize = (MEMORY_SIZE / SLOT_COUNT) as usize;
+        const MEMORY_SIZE: u32 = 16 << 20;  // 16 MiB
+        const SLOT_SIZE: usize = 2 << 20;   // 2 MiB
+    } else if #[cfg(target_board="sidecar-b")] {
+        const MEMORY_SIZE: u32 = 128 << 20; // 128 MiB
+        const SLOT_SIZE: usize = 2 << 20;   // 2 MiB
     } else {
         compile_error!("No auxflash support for this board");
         // Dummy values so that the error above is obvious; otherwise, the
         // compiler throws out a bunch of other errors.
         const MEMORY_SIZE: u32 = 0;
-        const SLOT_COUNT: u32 = 0;
         const SLOT_SIZE: usize = 0;
     }
 }
+const SLOT_COUNT: u32 = MEMORY_SIZE / SLOT_SIZE as u32;
 
 #[cfg(feature = "h753")]
 use stm32h7::stm32h753 as device;

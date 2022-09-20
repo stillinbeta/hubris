@@ -9,4 +9,9 @@
 use derive_idol_err::IdolError;
 use userlib::*;
 
+#[derive(Copy, Clone, Debug, FromPrimitive, PartialEq, IdolError)]
+pub enum TransceiversError {
+    TmpCatchAllError,
+}
+
 include!(concat!(env!("OUT_DIR"), "/client_stub.rs"));

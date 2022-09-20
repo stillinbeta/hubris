@@ -1,0 +1,14 @@
+// Transceivers API
+
+Interface(
+    name: "Transceivers",
+    ops: {
+        "read_presence": (
+            doc: "Get the Presence of each module.",
+            reply: Result(
+                ok: "u16",
+                err: CLike("TransceiversError"),
+            ),
+        )
+    }
+)

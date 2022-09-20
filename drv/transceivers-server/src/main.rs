@@ -5,24 +5,28 @@
 #![no_std]
 #![no_main]
 
+use drv_fpga_api::*;
+use drv_transceivers_api::*;
 use userlib::*;
 
-// NOTE: you will probably want to remove this when you write your actual code;
-// we need to import userlib to get this to compile, but it throws a warning
-// because we're not actually using it yet!
-#[allow(unused_imports)]
-use userlib::*;
+task_slot!(FPGA, fpga);
 
 #[export_name = "main"]
 fn main() -> ! {
     loop {
-        // NOTE: you need to put code here before running this! Otherwise LLVM
-        // will turn this into a single undefined instruction.
+        let mut buffer = [0; idl::INCOMING_SIZE];
+        let mut server = ServerImpl {};
+    
+        loop {
+            idol_runtime::dispatch(&mut buffer, &mut server);
+        }
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 mod idl {
+    use super::TransceiversError;
+
     include!(concat!(env!("OUT_DIR"), "/server_stub.rs"));
 }

@@ -7,5 +7,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "../../idl/transceivers.idol",
         "client_stub.rs",
     )?;
-    Ok(());
+    Ok(())
 }

@@ -10,7 +10,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let out_dir = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
 
-    if env::var("HUBRIS_BOARD")? != "sidecar-a" {
+    let board = env::var("HUBRIS_BOARD")?;
+    if board != "sidecar-a" && board != "sidecar-a" {
         panic!("unknown target board");
     }
 

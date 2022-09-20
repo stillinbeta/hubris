@@ -12,6 +12,9 @@ cfg_if::cfg_if! {
     } else if #[cfg(target_board = "sidecar-a")] {
         mod sidecar_a;
         pub use sidecar_a::*;
+    } else if #[cfg(target_board = "sidecar-b")] {
+        mod sidecar_b;
+        pub use sidecar_b::*;
     } else if #[cfg(any(target_board="gimlet-b"))] {
         mod gimlet_b;
         pub use gimlet_b::*;

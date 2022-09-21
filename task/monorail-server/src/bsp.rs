@@ -14,8 +14,11 @@ cfg_if::cfg_if! {
         mod vsc7448_dev;
         pub use vsc7448_dev::*;
     } else if #[cfg(target_board = "sidecar-a")] {
-        mod sidecar_1;
-        pub use sidecar_1::*;
+        mod sidecar_a;
+        pub use sidecar_a::*;
+    } else if #[cfg(target_board = "sidecar-b")] {
+        mod sidecar_b;
+        pub use sidecar_b::*;
     } else {
         compile_error!("No BSP available for this board");
     }

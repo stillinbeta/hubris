@@ -14,13 +14,16 @@ impl Transceivers {
     pub fn new(fpga_task: userlib::TaskId) -> Self {
         Self {
             // There are 16 QSFP-DD transceivers connected to each FPGA
-            fpgas: [FpgaUserDesign::new(fpga_task, 0), FpgaUserDesign::new(fpga_task, 1)],
+            fpgas: [
+                FpgaUserDesign::new(fpga_task, 0),
+                FpgaUserDesign::new(fpga_task, 1),
+            ],
             await_not_busy_sleep_for: 0,
         }
     }
 
-    #[inline]
-    pub fn transceiver_presence(&self) -> Result<u16, FpgaError> {
-        self.fpga.read(addr: Addr::STATUS_PRESENT_L)
-    }
+    // #[inline]
+    // pub fn transceiver_presence(&self) -> Result<u16, FpgaError> {
+    //     self.fpga.read(addr: Addr::STATUS_PRESENT_L)
+    // }
 }

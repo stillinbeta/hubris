@@ -22,8 +22,12 @@ impl Transceivers {
         }
     }
 
-    // #[inline]
-    // pub fn transceiver_presence(&self) -> Result<u16, FpgaError> {
-    //     self.fpga.read(addr: Addr::STATUS_PRESENT_L)
-    // }
+    #[inline]
+    pub fn transceiver_presence(&self) -> Result<u32, FpgaError> {
+        let fpga0: u16 = u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PRESENT_L)?);
+        let fpga1: u16 = u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PRESENT_L)?);
+        let f0: u32 = fpga0 as u32;
+        let f1: u32 = fpga1 as u32;
+        Ok((f1 << 16) | f0)
+    }
 }

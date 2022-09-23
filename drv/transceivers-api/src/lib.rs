@@ -6,12 +6,20 @@
 
 #![no_std]
 
+use drv_fpga_api::FpgaError;
 use derive_idol_err::IdolError;
 use userlib::*;
 
 #[derive(Copy, Clone, Debug, FromPrimitive, PartialEq, IdolError)]
 pub enum TransceiversError {
-    TmpCatchAllError,
+    FpgaError = 1,
+    TmpCatchAllError = 2,
+}
+
+impl From<FpgaError> for TransceiversError {
+    fn from(_: FpgaError) -> Self {
+        Self::FpgaError
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/client_stub.rs"));

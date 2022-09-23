@@ -5,7 +5,7 @@
 use crate::*;
 use drv_i2c_devices::{at24csw080::At24Csw080, Validate};
 use drv_sidecar_front_io::{
-    controller::FrontIOController, phy_smi::PhySmi, transceivers::Transceivers,
+    controller::FrontIOController, phy_smi::PhySmi
 };
 
 #[allow(dead_code)]

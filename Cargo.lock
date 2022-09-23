@@ -1531,6 +1531,7 @@ name = "drv-transceivers-api"
 version = "0.1.0"
 dependencies = [
  "derive-idol-err",
+ "drv-fpga-api",
  "idol",
  "idol-runtime",
  "num-traits",
@@ -1544,6 +1545,7 @@ version = "0.1.0"
 dependencies = [
  "build-util",
  "drv-fpga-api",
+ "drv-sidecar-front-io",
  "drv-transceivers-api",
  "idol",
  "idol-runtime",

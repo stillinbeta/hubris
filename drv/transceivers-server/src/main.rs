@@ -7,15 +7,32 @@
 
 use drv_fpga_api::*;
 use drv_transceivers_api::*;
+use drv_sidecar_front_io::transceivers::{Transceivers, self};
+use idol_runtime::Server;
 use userlib::*;
 
-task_slot!(FPGA, fpga);
+task_slot!(FRONT_IO, front_io);
+
+struct ServerImpl {
+    transceivers: Transceivers,
+}
+
+impl idl::InOrderTransceiversImpl for ServerImpl {
+    fn read_presence(
+        &mut self,
+        msg: &userlib::RecvMessage,
+    ) -> Result<u32,idol_runtime::RequestError<TransceiversError>> {
+        Ok(self.transceivers.transceiver_presence().map_err(TransceiversError::from)?)
+    }
+}
 
 #[export_name = "main"]
 fn main() -> ! {
     loop {
         let mut buffer = [0; idl::INCOMING_SIZE];
-        let mut server = ServerImpl {};
+        let transceivers = Transceivers::new(FRONT_IO.get_task_id());
+
+        let mut server = ServerImpl {transceivers};
 
         loop {
             idol_runtime::dispatch(&mut buffer, &mut server);

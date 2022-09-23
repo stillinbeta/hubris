@@ -6,7 +6,7 @@ Interface(
         "read_presence": (
             doc: "Get the Presence of each module.",
             reply: Result(
-                ok: "u16",
+                ok: "u32",
                 err: CLike("TransceiversError"),
             ),
         )

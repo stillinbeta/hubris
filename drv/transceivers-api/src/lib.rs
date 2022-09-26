@@ -10,10 +10,11 @@ use drv_fpga_api::FpgaError;
 use derive_idol_err::IdolError;
 use userlib::*;
 
-#[derive(Copy, Clone, Debug, FromPrimitive, PartialEq, IdolError)]
+#[derive(Copy, Clone, Debug, FromPrimitive, Eq, PartialEq, IdolError)]
 pub enum TransceiversError {
     FpgaError = 1,
-    TmpCatchAllError = 2,
+    InvalidPortNumber = 2,
+    InvalidNumberOfBytes = 3,
 }
 
 impl From<FpgaError> for TransceiversError {

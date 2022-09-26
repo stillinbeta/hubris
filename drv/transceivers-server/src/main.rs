@@ -5,10 +5,8 @@
 #![no_std]
 #![no_main]
 
-use drv_fpga_api::*;
 use drv_transceivers_api::*;
-use drv_sidecar_front_io::transceivers::{Transceivers, self};
-use idol_runtime::Server;
+use drv_sidecar_front_io::transceivers::Transceivers;
 use userlib::*;
 
 task_slot!(FRONT_IO, front_io);
@@ -18,11 +16,32 @@ struct ServerImpl {
 }
 
 impl idl::InOrderTransceiversImpl for ServerImpl {
-    fn read_presence(
+    fn get_power_good(
         &mut self,
-        msg: &userlib::RecvMessage,
+        _msg: &userlib::RecvMessage,
     ) -> Result<u32,idol_runtime::RequestError<TransceiversError>> {
-        Ok(self.transceivers.transceiver_presence().map_err(TransceiversError::from)?)
+        Ok(self.transceivers.get_power_good().map_err(TransceiversError::from)?)
+    }
+
+    fn get_power_good_timeout(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+    ) -> Result<u32,idol_runtime::RequestError<TransceiversError>> {
+        Ok(self.transceivers.get_power_good_timeout().map_err(TransceiversError::from)?)
+    }
+
+    fn get_presence(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+    ) -> Result<u32,idol_runtime::RequestError<TransceiversError>> {
+        Ok(self.transceivers.get_presence().map_err(TransceiversError::from)?)
+    }
+
+    fn get_irq_rxlos(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+    ) -> Result<u32,idol_runtime::RequestError<TransceiversError>> {
+        Ok(self.transceivers.get_irq_rxlos().map_err(TransceiversError::from)?)
     }
 }
 

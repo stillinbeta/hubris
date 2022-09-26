@@ -248,7 +248,7 @@ impl At24Csw080 {
     ///
     /// **Be careful** when using this value with integer literals:
     /// `write(addr, 0x01)` will write a 4-byte value!
-    pub fn write<V: Default + AsBytes + FromBytes>(
+    pub fn write<V: AsBytes + FromBytes>(
         &self,
         addr: u16,
         val: V,

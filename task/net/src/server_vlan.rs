@@ -220,7 +220,7 @@ impl<'a> ServerImpl<'a> {
             // Per https://github.com/oxidecomputer/oana/#mac-addresses, we
             // reserve `F0:00:00` and above for software stuff.
             if next_mac > 0xEFFFFF {
-                panic!("MAC overflow");
+                panic!("MAC overflow: {:?}", mac);
             }
 
             // Copy back into the (mutable) current MAC address

@@ -6,8 +6,8 @@
 
 #![no_std]
 
-use drv_fpga_api::FpgaError;
 use derive_idol_err::IdolError;
+use drv_fpga_api::FpgaError;
 use userlib::*;
 
 #[derive(Copy, Clone, Debug, FromPrimitive, Eq, PartialEq, IdolError)]

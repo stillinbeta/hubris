@@ -216,9 +216,13 @@ impl<'a> ServerImpl<'a> {
             let next_mac = (u32::from_be_bytes(mac[2..].try_into().unwrap())
                 & 0xFFFFFF)
                 + mac_address_block.stride as u32;
-            if next_mac & 0xFF000000 != 0 {
-                panic!("MAC overflow into OUI");
+
+            // Per https://github.com/oxidecomputer/oana/#mac-addresses, we
+            // reserve `F0:00:00` and above for software stuff.
+            if next_mac > 0xEFFFFF {
+                panic!("MAC overflow");
             }
+
             // Copy back into the (mutable) current MAC address
             mac[3..].copy_from_slice(&next_mac.to_be_bytes()[1..]);
         }

@@ -36,16 +36,16 @@ Interface(
             ),
         ),
 
-//        "get_i2c_read_buffer": (
-//            doc: "Get values from the I2C read buffer for a given port",
-//            args: {
-//                "port": "u8",
-//                "numbytes": "u8",
-//            },
-//            reply: Result(
-//                ok: "[u8; 128]",
-//                err: CLike("TransceiversError"),
-//            ),
-//        ),
+        "get_i2c_read_buffer": (
+            doc: "Get values from the I2C read buffer for a given port",
+            args: {
+                "port": "u8",
+                "num_bytes": "u8",
+            },
+            reply: Result(
+                ok: "[u8; 128]",
+                err: CLike("TransceiversError"),
+            ),
+        ),
     }
 )

@@ -87,10 +87,32 @@ impl Transceivers {
         Ok(())
     }
 
-    pub fn get_i2c_read_buffer(&self, port: usize, buf: &mut [u8]) -> Result<(), FpgaError> {
-        let fpga_idx: usize = if port < 16 {0} else {1};
+    pub fn get_i2c_read_buffer(&self, port: u8, buf: &mut [u8]) -> Result<(), FpgaError> {
+        let fpga_idx: usize = if port < 16 as u8 {0} else {1};
         //TODO: need to set the PORTx_READ_BUFFER dynamically
-        self.fpgas[fpga_idx].read_bytes(Addr::QSFP_PORT0_READ_BUFFER, buf)
+        self.fpgas[fpga_idx].read_bytes(Self::read_buffer_address(port), buf)
+    }
+
+    pub fn read_buffer_address(port: u8) -> Addr {
+        match port % 16 {
+            0 => Addr::QSFP_PORT0_READ_BUFFER,
+            1 => Addr::QSFP_PORT1_READ_BUFFER,
+            2 => Addr::QSFP_PORT2_READ_BUFFER,
+            3 => Addr::QSFP_PORT3_READ_BUFFER,
+            4 => Addr::QSFP_PORT4_READ_BUFFER,
+            5 => Addr::QSFP_PORT5_READ_BUFFER,
+            6 => Addr::QSFP_PORT6_READ_BUFFER,
+            7 => Addr::QSFP_PORT7_READ_BUFFER,
+            8 => Addr::QSFP_PORT8_READ_BUFFER,
+            9 => Addr::QSFP_PORT9_READ_BUFFER,
+            10 => Addr::QSFP_PORT10_READ_BUFFER,
+            11 => Addr::QSFP_PORT11_READ_BUFFER,
+            12 => Addr::QSFP_PORT12_READ_BUFFER,
+            13 => Addr::QSFP_PORT13_READ_BUFFER,
+            14 => Addr::QSFP_PORT14_READ_BUFFER,
+            15 => Addr::QSFP_PORT15_READ_BUFFER,
+            _ => Addr::QSFP_PORT0_READ_BUFFER
+        }
     }
 }
 

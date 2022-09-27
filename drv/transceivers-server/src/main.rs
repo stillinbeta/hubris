@@ -55,6 +55,21 @@ impl idl::InOrderTransceiversImpl for ServerImpl {
             .get_irq_rxlos()
             .map_err(TransceiversError::from)?)
     }
+
+    fn get_i2c_read_buffer(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+        port: u8,
+        num_bytes: u8,
+    ) -> Result<[u8; 128], idol_runtime::RequestError<TransceiversError>> {
+        let mut buf: [u8; 128] = [0; 128];
+        self
+            .transceivers
+            .get_i2c_read_buffer(port, &mut buf[..(num_bytes as usize)])
+            .map_err(TransceiversError::from)?;
+
+        Ok(buf)
+    }
 }
 
 #[export_name = "main"]

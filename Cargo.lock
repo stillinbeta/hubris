@@ -959,6 +959,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "drv-local-vpd"
+version = "0.1.0"
+dependencies = [
+ "build-i2c",
+ "build-util",
+ "drv-i2c-api",
+ "drv-i2c-devices",
+ "serde",
+ "tlvc",
+ "userlib",
+ "zerocopy",
+]
+
+[[package]]
 name = "drv-lpc55-gpio"
 version = "0.1.0"
 dependencies = [
@@ -3520,14 +3534,12 @@ dependencies = [
 name = "task-net"
 version = "0.1.0"
 dependencies = [
- "build-i2c",
  "build-net",
  "build-util",
  "cfg-if",
  "cortex-m",
  "drv-gimlet-seq-api",
- "drv-i2c-api",
- "drv-i2c-devices",
+ "drv-local-vpd",
  "drv-sidecar-seq-api",
  "drv-spi-api",
  "drv-stm32h7-eth",
@@ -3550,7 +3562,6 @@ dependencies = [
  "syn",
  "task-jefe-api",
  "task-net-api",
- "tlvc",
  "userlib",
  "vsc7448-pac",
  "vsc85xx",

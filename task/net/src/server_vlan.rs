@@ -13,9 +13,7 @@ use idol_runtime::{ClientError, NotificationHandler, RequestError};
 use mutable_statics::mutable_statics;
 use smoltcp::iface::{Interface, Neighbor, SocketHandle, SocketStorage};
 use smoltcp::socket::UdpSocket;
-use smoltcp::wire::{
-    EthernetAddress, IpAddress, IpCidr, Ipv6Address, Ipv6Cidr,
-};
+use smoltcp::wire::{EthernetAddress, IpAddress, IpCidr, Ipv6Cidr};
 use task_net_api::{
     LargePayloadBehavior, RecvError, SendError, SocketName, UdpMetadata,
 };
@@ -23,7 +21,9 @@ use userlib::{sys_post, sys_refresh_task_id};
 
 use crate::generated::{self, SOCKET_COUNT, VLAN_COUNT, VLAN_RANGE};
 use crate::server::NetServer;
-use crate::{idl, ETH_IRQ, NEIGHBORS, WAKE_IRQ};
+use crate::{
+    idl, link_local_iface_addr, MacAddressBlock, ETH_IRQ, NEIGHBORS, WAKE_IRQ,
+};
 
 type NeighborStorage = Option<(IpAddress, Neighbor)>;
 
@@ -132,8 +132,7 @@ impl<'a> ServerImpl<'a> {
     /// Builds a new `ServerImpl`, using the provided storage space.
     pub fn new(
         eth: &'a eth::Ethernet,
-        mut ipv6_addr: Ipv6Address,
-        mut mac: EthernetAddress,
+        mac_address_block: MacAddressBlock,
         bsp: crate::bsp::Bsp,
     ) -> Self {
         // Local storage; this will end up owned by the returned ServerImpl.
@@ -158,8 +157,15 @@ impl<'a> ServerImpl<'a> {
         let sockets = generated::construct_sockets();
         assert_eq!(sockets.0.len(), VLAN_COUNT);
 
-        let start_mac = mac;
+        // Did you bring enough MAC addresses for everyone?
+        assert!(mac_address_block.count.get() as usize >= VLAN_COUNT);
+
+        let mut mac: [u8; 6] = mac_address_block.base_mac;
         for sockets in sockets.0.into_iter() {
+            // Configure the server and its local storage arrays (on the stack)
+            let mac_addr = EthernetAddress::from_bytes(&mac);
+            let ipv6_addr = link_local_iface_addr(mac_addr);
+
             let neighbor_cache_storage = neighbor_cache_iter.next().unwrap();
             let neighbor_cache = smoltcp::iface::NeighborCache::new(
                 &mut neighbor_cache_storage[..],
@@ -177,7 +183,7 @@ impl<'a> ServerImpl<'a> {
             let ipv6_net = ip_addr_iter.next().unwrap();
             ipv6_net[0] = Ipv6Cidr::new(ipv6_addr, 64).into();
             let mut iface = builder
-                .hardware_addr(mac.into())
+                .hardware_addr(mac_addr.into())
                 .neighbor_cache(neighbor_cache)
                 .ip_addrs(ipv6_net)
                 .finalize();
@@ -202,10 +208,19 @@ impl<'a> ServerImpl<'a> {
             }
             *ifaces_iter.next().unwrap() = Some(iface);
 
-            // Increment the MAC and IP addresses so that each VLAN has
-            // a unique address.
-            ipv6_addr.0[15] += 1;
-            mac.0[5] += 1;
+            // Increment the MAC and IP addresses based on the stride in the
+            // configuration block, so that each VLAN has a unique address.
+            //
+            // We take advantage of the fact that the top 3 octets are the OUI,
+            // and convert into a u32 to do the incrementing.
+            let next_mac = (u32::from_be_bytes(mac[2..].try_into().unwrap())
+                & 0xFFFFFF)
+                + mac_address_block.stride as u32;
+            if next_mac & 0xFF000000 != 0 {
+                panic!("MAC overflow into OUI");
+            }
+            // Copy back into the (mutable) current MAC address
+            mac[3..].copy_from_slice(&next_mac.to_be_bytes()[1..]);
         }
 
         let ifaces = ifaces.map(|e| e.unwrap());
@@ -215,7 +230,7 @@ impl<'a> ServerImpl<'a> {
             socket_handles,
             ifaces,
             bsp,
-            mac: start_mac,
+            mac: EthernetAddress::from_bytes(&mac_address_block.base_mac),
         }
     }
 

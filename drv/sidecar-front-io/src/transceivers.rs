@@ -21,34 +21,148 @@ impl Transceivers {
         }
     }
 
-    pub fn get_presence(&self) -> Result<u32, FpgaError> {
-        let f0: u16 =
-            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PRESENT_L)?);
-        let f1: u16 =
-            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PRESENT_L)?);
-        Ok((f1 as u32) << 16 | (f0 as u32))
-    }
-
     pub fn get_power_good(&self) -> Result<u32, FpgaError> {
-        let f0: u16 = u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PG_L)?);
-        let f1: u16 = u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PG_L)?);
+        let f0: u16 = u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PG_H)?);
+        let f1: u16 = u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PG_H)?);
         Ok((f1 as u32) << 16 | (f0 as u32))
     }
 
     pub fn get_power_good_timeout(&self) -> Result<u32, FpgaError> {
         let f0: u16 =
-            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PG_TIMEOUT_L)?);
+            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PG_TIMEOUT_H)?);
         let f1: u16 =
-            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PG_TIMEOUT_L)?);
+            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PG_TIMEOUT_H)?);
+        Ok((f1 as u32) << 16 | (f0 as u32))
+    }
+
+    pub fn get_presence(&self) -> Result<u32, FpgaError> {
+        let f0: u16 =
+            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PRESENT_H)?);
+        let f1: u16 =
+            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PRESENT_H)?);
         Ok((f1 as u32) << 16 | (f0 as u32))
     }
 
     pub fn get_irq_rxlos(&self) -> Result<u32, FpgaError> {
         let f0: u16 =
-            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_IRQ_L)?);
+            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_IRQ_H)?);
         let f1: u16 =
-            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_IRQ_L)?);
+            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_IRQ_H)?);
         Ok((f1 as u32) << 16 | (f0 as u32))
+    }
+
+    pub fn get_modules_status(&self) -> Result<[u32; 7], FpgaError> {
+        let mut r: [u32; 7] = [0; 7];
+        let f0: [u8; 14] = self.fpgas[0].read(Addr::QSFP_CTRL_EN_H)?;
+        let f1: [u8; 14] = self.fpgas[1].read(Addr::QSFP_CTRL_EN_H)?;
+
+        for i in 0..7 {
+            r[i] = ((f1[i*2] as u32) << 24) | ((f1[i*2+1] as u32) << 16) | ((f0[i*2] as u32) << 8) | (f0[i*2+1] as u32);
+        }
+
+        Ok(r)
+    }
+
+    pub fn set_power_enable(
+        &self,
+        port_bcast_mask: u32,
+    ) -> Result<(), FpgaError> {
+        let fpga0_ens: [u8; 2] =
+            ((port_bcast_mask & 0xFFFF) as u16).to_be_bytes();
+        if (port_bcast_mask & 0xFFFF) > 0 {
+            self.fpgas[0].write(
+                WriteOp::BitSet,
+                Addr::QSFP_CTRL_EN_H,
+                fpga0_ens,
+            )?;
+        }
+
+        let fpga1_ens: [u8; 2] =
+            ((port_bcast_mask & 0xFFFF0000) as u16).to_be_bytes();
+        if (port_bcast_mask & 0xFFFF0000) > 0 {
+            self.fpgas[1].write(
+                WriteOp::BitSet,
+                Addr::QSFP_CTRL_EN_H,
+                fpga1_ens,
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn clear_power_enable(
+        &self,
+        port_bcast_mask: u32,
+    ) -> Result<(), FpgaError> {
+        let fpga0_ens: [u8; 2] =
+            ((port_bcast_mask & 0xFFFF) as u16).to_be_bytes();
+        if (port_bcast_mask & 0xFFFF) > 0 {
+            self.fpgas[0].write(
+                WriteOp::BitClear,
+                Addr::QSFP_CTRL_EN_H,
+                fpga0_ens,
+            )?;
+        }
+
+        let fpga1_ens: [u8; 2] =
+            ((port_bcast_mask & 0xFFFF0000) as u16).to_be_bytes();
+        if (port_bcast_mask & 0xFFFF0000) > 0 {
+            self.fpgas[1].write(
+                WriteOp::BitClear,
+                Addr::QSFP_CTRL_EN_H,
+                fpga1_ens,
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn set_reset(&self, port_bcast_mask: u32) -> Result<(), FpgaError> {
+        let fpga0_reset: [u8; 2] =
+            ((port_bcast_mask & 0xFFFF) as u16).to_be_bytes();
+        if (port_bcast_mask & 0xFFFF) > 0 {
+            self.fpgas[0].write(
+                WriteOp::BitSet,
+                Addr::QSFP_CTRL_RESET_H,
+                fpga0_reset,
+            )?;
+        }
+
+        let fpga1_reset: [u8; 2] =
+            ((port_bcast_mask & 0xFFFF0000) as u16).to_be_bytes();
+        if (port_bcast_mask & 0xFFFF0000) > 0 {
+            self.fpgas[1].write(
+                WriteOp::BitSet,
+                Addr::QSFP_CTRL_RESET_H,
+                fpga1_reset,
+            )?;
+        }
+
+        Ok(())
+    }
+
+    pub fn clear_reset(&self, port_bcast_mask: u32) -> Result<(), FpgaError> {
+        let fpga0_reset: [u8; 2] =
+            ((port_bcast_mask & 0xFFFF) as u16).to_be_bytes();
+        if (port_bcast_mask & 0xFFFF) > 0 {
+            self.fpgas[0].write(
+                WriteOp::BitClear,
+                Addr::QSFP_CTRL_RESET_H,
+                fpga0_reset,
+            )?;
+        }
+
+        let fpga1_reset: [u8; 2] =
+            ((port_bcast_mask & 0xFFFF0000) as u16).to_be_bytes();
+        if (port_bcast_mask & 0xFFFF0000) > 0 {
+            self.fpgas[1].write(
+                WriteOp::BitClear,
+                Addr::QSFP_CTRL_RESET_H,
+                fpga1_reset,
+            )?;
+        }
+
+        Ok(())
     }
 
     pub fn setup_i2c_read(
@@ -87,9 +201,12 @@ impl Transceivers {
         Ok(())
     }
 
-    pub fn get_i2c_read_buffer(&self, port: u8, buf: &mut [u8]) -> Result<(), FpgaError> {
-        let fpga_idx: usize = if port < 16 as u8 {0} else {1};
-        //TODO: need to set the PORTx_READ_BUFFER dynamically
+    pub fn get_i2c_read_buffer(
+        &self,
+        port: u8,
+        buf: &mut [u8],
+    ) -> Result<(), FpgaError> {
+        let fpga_idx: usize = if port < 16 as u8 { 0 } else { 1 };
         self.fpgas[fpga_idx].read_bytes(Self::read_buffer_address(port), buf)
     }
 
@@ -111,7 +228,7 @@ impl Transceivers {
             13 => Addr::QSFP_PORT13_READ_BUFFER,
             14 => Addr::QSFP_PORT14_READ_BUFFER,
             15 => Addr::QSFP_PORT15_READ_BUFFER,
-            _ => Addr::QSFP_PORT0_READ_BUFFER
+            _ => Addr::QSFP_PORT0_READ_BUFFER,
         }
     }
 }

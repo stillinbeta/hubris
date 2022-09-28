@@ -6,8 +6,8 @@ edition = "2021"
 
 [dependencies]
 userlib = {path = "../../sys/userlib", features = ["panic-messages"]}
-drv-transceivers-api = {path = "../transceivers-api", default-features = false}
 drv-sidecar-front-io = {path = "../sidecar-front-io", features = ["transceivers"]}
+drv-transceivers-api = {path = "../transceivers-api", default-features = false}
 
 idol-runtime = {git = "https://github.com/oxidecomputer/idolatry.git"}
 

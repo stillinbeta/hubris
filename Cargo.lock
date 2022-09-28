@@ -1535,6 +1535,7 @@ dependencies = [
  "idol",
  "idol-runtime",
  "num-traits",
+ "serde",
  "userlib",
  "zerocopy",
 ]

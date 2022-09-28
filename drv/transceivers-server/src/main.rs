@@ -6,8 +6,8 @@
 #![no_main]
 
 use drv_sidecar_front_io::transceivers::Transceivers;
-use drv_transceivers_api::*;
-use userlib::*;
+use drv_transceivers_api::{ModulesStatus, TransceiversError};
+use userlib::task_slot;
 
 task_slot!(FRONT_IO, front_io);
 
@@ -56,6 +56,89 @@ impl idl::InOrderTransceiversImpl for ServerImpl {
             .map_err(TransceiversError::from)?)
     }
 
+    fn get_modules_status(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+    ) -> Result<ModulesStatus, idol_runtime::RequestError<TransceiversError>>
+    {
+        Ok(ModulesStatus::from(
+            self.transceivers
+                .get_modules_status()
+                .map_err(TransceiversError::from)?,
+        ))
+    }
+
+    fn set_power_enable(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+        port_bcast_mask: u32,
+    ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
+        Ok(self
+            .transceivers
+            .set_power_enable(port_bcast_mask)
+            .map_err(TransceiversError::from)?)
+    }
+
+    fn clear_power_enable(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+        port_bcast_mask: u32,
+    ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
+        Ok(self
+            .transceivers
+            .clear_power_enable(port_bcast_mask)
+            .map_err(TransceiversError::from)?)
+    }
+
+    fn set_reset(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+        port_bcast_mask: u32,
+    ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
+        Ok(self
+            .transceivers
+            .set_reset(port_bcast_mask)
+            .map_err(TransceiversError::from)?)
+    }
+
+    fn clear_reset(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+        port_bcast_mask: u32,
+    ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
+        Ok(self
+            .transceivers
+            .clear_reset(port_bcast_mask)
+            .map_err(TransceiversError::from)?)
+    }
+
+    fn setup_i2c_read(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+        reg: u8,
+        num_bytes: u8,
+        port_bcast_mask: u32,
+    ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
+        Ok(self
+            .transceivers
+            .setup_i2c_read(reg, num_bytes, port_bcast_mask)
+            .map_err(TransceiversError::from)?)
+    }
+
+    fn get_i2c_config(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+        fpga_idx: u8,
+    ) -> Result<[u8; 5], idol_runtime::RequestError<TransceiversError>> {
+        let mut buf: [u8; 5] = [0; 5];
+        self
+            .transceivers
+            .get_i2c_config(fpga_idx, &mut buf)
+            .map_err(TransceiversError::from)?;
+
+        Ok(buf)
+    }
+
     fn get_i2c_read_buffer(
         &mut self,
         _msg: &userlib::RecvMessage,
@@ -63,8 +146,7 @@ impl idl::InOrderTransceiversImpl for ServerImpl {
         num_bytes: u8,
     ) -> Result<[u8; 128], idol_runtime::RequestError<TransceiversError>> {
         let mut buf: [u8; 128] = [0; 128];
-        self
-            .transceivers
+        self.transceivers
             .get_i2c_read_buffer(port, &mut buf[..(num_bytes as usize)])
             .map_err(TransceiversError::from)?;
 
@@ -89,7 +171,7 @@ fn main() -> ! {
 ////////////////////////////////////////////////////////////////////////////////
 
 mod idl {
-    use super::TransceiversError;
+    use super::{ModulesStatus, TransceiversError};
 
     include!(concat!(env!("OUT_DIR"), "/server_stub.rs"));
 }

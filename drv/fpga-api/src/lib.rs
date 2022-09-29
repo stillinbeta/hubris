@@ -290,6 +290,16 @@ impl FpgaUserDesign {
             value.as_bytes(),
         )
     }
+
+    pub fn write_bytes(
+        &self,
+        op: WriteOp,
+        addr: impl Into<u16>,
+        data: &[u8],
+    ) -> Result<(), FpgaError> {
+        self.server
+            .user_design_write(self.device_index, op, addr.into(), data)
+    }
 }
 
 /// Poll the device state of the FPGA to determine if it is either ready to receive

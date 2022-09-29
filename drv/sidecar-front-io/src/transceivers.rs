@@ -4,7 +4,7 @@
 
 use crate::{Addr, Reg};
 use drv_fpga_api::{FpgaError, FpgaUserDesign, WriteOp};
-use zerocopy::{byteorder, AsBytes, FromBytes, Unaligned, U16, U32};
+use zerocopy::{AsBytes, FromBytes, Unaligned};
 
 pub struct Transceivers {
     fpgas: [FpgaUserDesign; 2],
@@ -21,43 +21,16 @@ impl Transceivers {
         }
     }
 
-    pub fn get_power_good(&self) -> Result<u32, FpgaError> {
-        let f0: u16 = u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PG_H)?);
-        let f1: u16 = u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PG_H)?);
-        Ok((f1 as u32) << 16 | (f0 as u32))
-    }
-
-    pub fn get_power_good_timeout(&self) -> Result<u32, FpgaError> {
-        let f0: u16 =
-            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PG_TIMEOUT_H)?);
-        let f1: u16 =
-            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PG_TIMEOUT_H)?);
-        Ok((f1 as u32) << 16 | (f0 as u32))
-    }
-
-    pub fn get_presence(&self) -> Result<u32, FpgaError> {
-        let f0: u16 =
-            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_PRESENT_H)?);
-        let f1: u16 =
-            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_PRESENT_H)?);
-        Ok((f1 as u32) << 16 | (f0 as u32))
-    }
-
-    pub fn get_irq_rxlos(&self) -> Result<u32, FpgaError> {
-        let f0: u16 =
-            u16::from_be(self.fpgas[0].read(Addr::QSFP_STATUS_IRQ_H)?);
-        let f1: u16 =
-            u16::from_be(self.fpgas[1].read(Addr::QSFP_STATUS_IRQ_H)?);
-        Ok((f1 as u32) << 16 | (f0 as u32))
-    }
-
     pub fn get_modules_status(&self) -> Result<[u32; 7], FpgaError> {
         let mut r: [u32; 7] = [0; 7];
         let f0: [u8; 14] = self.fpgas[0].read(Addr::QSFP_CTRL_EN_H)?;
         let f1: [u8; 14] = self.fpgas[1].read(Addr::QSFP_CTRL_EN_H)?;
 
         for i in 0..7 {
-            r[i] = ((f1[i*2] as u32) << 24) | ((f1[i*2+1] as u32) << 16) | ((f0[i*2] as u32) << 8) | (f0[i*2+1] as u32);
+            r[i] = ((f1[i * 2] as u32) << 24)
+                | ((f1[i * 2 + 1] as u32) << 16)
+                | ((f0[i * 2] as u32) << 8)
+                | (f0[i * 2 + 1] as u32);
         }
 
         Ok(r)
@@ -165,38 +138,53 @@ impl Transceivers {
         Ok(())
     }
 
-    pub fn setup_i2c_read(
+    pub fn setup_i2c_op(
         &self,
+        is_read: bool,
         reg: u8,
         num_bytes: u8,
         port_bcast_mask: u32,
     ) -> Result<(), FpgaError> {
-        let bcast_mask: U32<byteorder::BigEndian> = U32::new(port_bcast_mask);
-        let request = TransceiversI2CRequest {
-            reg,
-            num_bytes,
-            port_bcast_mask: U16::new(bcast_mask.get() as u16),
-            op: ((TransceiverI2COperation::RandomRead as u8) << 1)
-                | Reg::QSFP::I2C_CTRL::START,
-        };
-        self.fpgas[0].write(
-            WriteOp::Write,
-            Addr::QSFP_I2C_REG_ADDR,
-            request,
-        )?;
+        let bcast_mask: [u8; 4] = port_bcast_mask.to_be_bytes();
 
-        let request = TransceiversI2CRequest {
-            reg,
-            num_bytes,
-            port_bcast_mask: U16::new((bcast_mask.get() >> 16) as u16),
-            op: ((TransceiverI2COperation::RandomRead as u8) << 1)
-                | Reg::QSFP::I2C_CTRL::START,
+        let i2c_op = if is_read {
+            // Defaulting to RandomRead, rather than Read, because RandomRead
+            // sets the reg addr in the target device, then issues a restart to
+            // do the read at that reg addr. On the other hand, Read just starts
+            // a read wherever the reg addr is after the last transaction.
+            TransceiverI2COperation::RandomRead
+        } else {
+            TransceiverI2COperation::Write
         };
-        self.fpgas[1].write(
-            WriteOp::Write,
-            Addr::QSFP_I2C_REG_ADDR,
-            request,
-        )?;
+
+        if (port_bcast_mask & 0xFFFF) > 0 {
+            let request = TransceiversI2CRequest {
+                reg,
+                num_bytes,
+                port_bcast_mask: [bcast_mask[1], bcast_mask[0]],
+                op: ((i2c_op as u8) << 1) | Reg::QSFP::I2C_CTRL::START,
+            };
+
+            self.fpgas[0].write(
+                WriteOp::Write,
+                Addr::QSFP_I2C_REG_ADDR,
+                request,
+            )?;
+        }
+
+        if (port_bcast_mask & 0xFFFF0000) > 0 {
+            let request = TransceiversI2CRequest {
+                reg,
+                num_bytes,
+                port_bcast_mask: [bcast_mask[3], bcast_mask[2]],
+                op: ((i2c_op as u8) << 1) | Reg::QSFP::I2C_CTRL::START,
+            };
+            self.fpgas[1].write(
+                WriteOp::Write,
+                Addr::QSFP_I2C_REG_ADDR,
+                request,
+            )?;
+        }
 
         Ok(())
     }
@@ -208,6 +196,21 @@ impl Transceivers {
     ) -> Result<(), FpgaError> {
         let fpga_idx: usize = if port < 16 as u8 { 0 } else { 1 };
         self.fpgas[fpga_idx].read_bytes(Self::read_buffer_address(port), buf)
+    }
+
+    pub fn set_i2c_write_buffer(&self, buf: &[u8]) -> Result<(), FpgaError> {
+        self.fpgas[0].write_bytes(
+            WriteOp::Write,
+            Addr::QSFP_WRITE_BUFFER,
+            buf,
+        )?;
+        self.fpgas[1].write_bytes(
+            WriteOp::Write,
+            Addr::QSFP_WRITE_BUFFER,
+            buf,
+        )?;
+
+        Ok(())
     }
 
     pub fn read_buffer_address(port: u8) -> Addr {
@@ -253,6 +256,6 @@ impl From<TransceiverI2COperation> for u8 {
 pub struct TransceiversI2CRequest {
     reg: u8,
     num_bytes: u8,
-    port_bcast_mask: U16<byteorder::BigEndian>,
+    port_bcast_mask: [u8; 2],
     op: u8,
 }

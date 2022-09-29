@@ -16,46 +16,6 @@ struct ServerImpl {
 }
 
 impl idl::InOrderTransceiversImpl for ServerImpl {
-    fn get_power_good(
-        &mut self,
-        _msg: &userlib::RecvMessage,
-    ) -> Result<u32, idol_runtime::RequestError<TransceiversError>> {
-        Ok(self
-            .transceivers
-            .get_power_good()
-            .map_err(TransceiversError::from)?)
-    }
-
-    fn get_power_good_timeout(
-        &mut self,
-        _msg: &userlib::RecvMessage,
-    ) -> Result<u32, idol_runtime::RequestError<TransceiversError>> {
-        Ok(self
-            .transceivers
-            .get_power_good_timeout()
-            .map_err(TransceiversError::from)?)
-    }
-
-    fn get_presence(
-        &mut self,
-        _msg: &userlib::RecvMessage,
-    ) -> Result<u32, idol_runtime::RequestError<TransceiversError>> {
-        Ok(self
-            .transceivers
-            .get_presence()
-            .map_err(TransceiversError::from)?)
-    }
-
-    fn get_irq_rxlos(
-        &mut self,
-        _msg: &userlib::RecvMessage,
-    ) -> Result<u32, idol_runtime::RequestError<TransceiversError>> {
-        Ok(self
-            .transceivers
-            .get_irq_rxlos()
-            .map_err(TransceiversError::from)?)
-    }
-
     fn get_modules_status(
         &mut self,
         _msg: &userlib::RecvMessage,
@@ -112,31 +72,18 @@ impl idl::InOrderTransceiversImpl for ServerImpl {
             .map_err(TransceiversError::from)?)
     }
 
-    fn setup_i2c_read(
+    fn setup_i2c_op(
         &mut self,
         _msg: &userlib::RecvMessage,
+        is_read: bool,
         reg: u8,
         num_bytes: u8,
         port_bcast_mask: u32,
     ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
         Ok(self
             .transceivers
-            .setup_i2c_read(reg, num_bytes, port_bcast_mask)
+            .setup_i2c_op(is_read, reg, num_bytes, port_bcast_mask)
             .map_err(TransceiversError::from)?)
-    }
-
-    fn get_i2c_config(
-        &mut self,
-        _msg: &userlib::RecvMessage,
-        fpga_idx: u8,
-    ) -> Result<[u8; 5], idol_runtime::RequestError<TransceiversError>> {
-        let mut buf: [u8; 5] = [0; 5];
-        self
-            .transceivers
-            .get_i2c_config(fpga_idx, &mut buf)
-            .map_err(TransceiversError::from)?;
-
-        Ok(buf)
     }
 
     fn get_i2c_read_buffer(
@@ -151,6 +98,18 @@ impl idl::InOrderTransceiversImpl for ServerImpl {
             .map_err(TransceiversError::from)?;
 
         Ok(buf)
+    }
+
+    fn set_i2c_write_buffer(
+        &mut self,
+        _msg: &userlib::RecvMessage,
+        num_bytes: u8,
+        buf: [u8; 128],
+    ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
+        Ok(self
+            .transceivers
+            .set_i2c_write_buffer(&buf[..(num_bytes as usize)])
+            .map_err(TransceiversError::from)?)
     }
 }
 

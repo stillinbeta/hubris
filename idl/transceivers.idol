@@ -3,39 +3,6 @@
 Interface(
     name: "Transceivers",
     ops: {
-
-        "get_presence": (
-            doc: "Get the Presence of each module.",
-            reply: Result(
-                ok: "u32",
-                err: CLike("TransceiversError"),
-            ),
-        ),
-
-        "get_power_good": (
-            doc: "Get the Power Good of the hot-swap controller of each module.",
-            reply: Result(
-                ok: "u32",
-                err: CLike("TransceiversError"),
-            ),
-        ),
-
-        "get_power_good_timeout": (
-            doc: "Get the Power Good timeout of the hot-swap controller of each module.",
-            reply: Result(
-                ok: "u32",
-                err: CLike("TransceiversError"),
-            ),
-        ),
-
-        "get_irq_rxlos": (
-            doc: "Get the Interrupt/RxLOS of each module.",
-            reply: Result(
-                ok: "u32",
-                err: CLike("TransceiversError"),
-            ),
-        ),
-
         "get_modules_status": (
             doc: "Collect the status of each modules control and status signals",
             reply: Result(
@@ -88,9 +55,10 @@ Interface(
             ),
         ),
 
-        "setup_i2c_read": (
-            doc: "Setup a read operation over I2C to all modules whose bit is set in the port_bcast_mask",
+        "setup_i2c_op": (
+            doc: "Setup an operation over I2C to all modules whose bit is set in the port_bcast_mask",
             args: {
+                "is_read": "bool",
                 "reg": "u8",
                 "num_bytes": "u8",
                 "port_bcast_mask": "u32",
@@ -102,13 +70,25 @@ Interface(
         ),
 
         "get_i2c_read_buffer": (
-            doc: "Get values from the I2C read buffer for a given port number (0 to 31)",
+            doc: "Get up to 128 bytes from the I2C read buffer for a given port number (0 to 31)",
             args: {
                 "port": "u8",
                 "num_bytes": "u8",
             },
             reply: Result(
                 ok: "[u8; 128]",
+                err: CLike("TransceiversError"),
+            ),
+        ),
+
+        "set_i2c_write_buffer": (
+            doc: "Set up to 128 bytes in the I2C write buffer of all modules. Note that these will not be written without a call to setup_i2c_op.",
+            args: {
+                "num_bytes": "u8",
+                "buf": "[u8; 128]",
+            },
+            reply: Result(
+                ok: "()",
                 err: CLike("TransceiversError"),
             ),
         ),

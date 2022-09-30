@@ -36,102 +36,84 @@ impl Transceivers {
         Ok(r)
     }
 
-    pub fn set_power_enable(
-        &self,
-        port_bcast_mask: u32,
-    ) -> Result<(), FpgaError> {
-        let fpga0_ens: [u8; 2] =
-            ((port_bcast_mask & 0xFFFF) as u16).to_be_bytes();
-        if (port_bcast_mask & 0xFFFF) > 0 {
+    pub fn set_power_enable(&self, mask: u32) -> Result<(), FpgaError> {
+        let m = mask.as_bytes();
+
+        if (mask & 0xFFFF) > 0 {
             self.fpgas[0].write(
                 WriteOp::BitSet,
                 Addr::QSFP_CTRL_EN_H,
-                fpga0_ens,
+                [m[1], m[0]],
             )?;
         }
-
-        let fpga1_ens: [u8; 2] =
-            ((port_bcast_mask & 0xFFFF0000) as u16).to_be_bytes();
-        if (port_bcast_mask & 0xFFFF0000) > 0 {
+        if (mask & 0xFFFF0000) > 0 {
             self.fpgas[1].write(
                 WriteOp::BitSet,
                 Addr::QSFP_CTRL_EN_H,
-                fpga1_ens,
+                [m[3], m[2]],
             )?;
         }
 
         Ok(())
     }
 
-    pub fn clear_power_enable(
-        &self,
-        port_bcast_mask: u32,
-    ) -> Result<(), FpgaError> {
-        let fpga0_ens: [u8; 2] =
-            ((port_bcast_mask & 0xFFFF) as u16).to_be_bytes();
-        if (port_bcast_mask & 0xFFFF) > 0 {
+    pub fn clear_power_enable(&self, mask: u32) -> Result<(), FpgaError> {
+        let m = mask.as_bytes();
+
+        if (mask & 0xFFFF) > 0 {
             self.fpgas[0].write(
                 WriteOp::BitClear,
                 Addr::QSFP_CTRL_EN_H,
-                fpga0_ens,
+                [m[1], m[0]],
             )?;
         }
-
-        let fpga1_ens: [u8; 2] =
-            ((port_bcast_mask & 0xFFFF0000) as u16).to_be_bytes();
-        if (port_bcast_mask & 0xFFFF0000) > 0 {
+        if (mask & 0xFFFF0000) > 0 {
             self.fpgas[1].write(
                 WriteOp::BitClear,
                 Addr::QSFP_CTRL_EN_H,
-                fpga1_ens,
+                [m[3], m[2]],
             )?;
         }
 
         Ok(())
     }
 
-    pub fn set_reset(&self, port_bcast_mask: u32) -> Result<(), FpgaError> {
-        let fpga0_reset: [u8; 2] =
-            ((port_bcast_mask & 0xFFFF) as u16).to_be_bytes();
-        if (port_bcast_mask & 0xFFFF) > 0 {
+    pub fn set_reset(&self, mask: u32) -> Result<(), FpgaError> {
+        let m = mask.as_bytes();
+
+        if (mask & 0xFFFF) > 0 {
             self.fpgas[0].write(
                 WriteOp::BitSet,
                 Addr::QSFP_CTRL_RESET_H,
-                fpga0_reset,
+                [m[1], m[0]],
             )?;
         }
-
-        let fpga1_reset: [u8; 2] =
-            ((port_bcast_mask & 0xFFFF0000) as u16).to_be_bytes();
-        if (port_bcast_mask & 0xFFFF0000) > 0 {
+        if (mask & 0xFFFF0000) > 0 {
             self.fpgas[1].write(
                 WriteOp::BitSet,
                 Addr::QSFP_CTRL_RESET_H,
-                fpga1_reset,
+                [m[3], m[2]],
             )?;
         }
 
         Ok(())
     }
 
-    pub fn clear_reset(&self, port_bcast_mask: u32) -> Result<(), FpgaError> {
-        let fpga0_reset: [u8; 2] =
-            ((port_bcast_mask & 0xFFFF) as u16).to_be_bytes();
-        if (port_bcast_mask & 0xFFFF) > 0 {
+    pub fn clear_reset(&self, mask: u32) -> Result<(), FpgaError> {
+        let m = mask.as_bytes();
+
+        if (mask & 0xFFFF) > 0 {
             self.fpgas[0].write(
                 WriteOp::BitClear,
                 Addr::QSFP_CTRL_RESET_H,
-                fpga0_reset,
+                [m[1], m[0]],
             )?;
         }
-
-        let fpga1_reset: [u8; 2] =
-            ((port_bcast_mask & 0xFFFF0000) as u16).to_be_bytes();
-        if (port_bcast_mask & 0xFFFF0000) > 0 {
+        if (mask & 0xFFFF0000) > 0 {
             self.fpgas[1].write(
                 WriteOp::BitClear,
                 Addr::QSFP_CTRL_RESET_H,
-                fpga1_reset,
+                [m[3], m[2]],
             )?;
         }
 
@@ -143,9 +125,9 @@ impl Transceivers {
         is_read: bool,
         reg: u8,
         num_bytes: u8,
-        port_bcast_mask: u32,
+        mask: u32,
     ) -> Result<(), FpgaError> {
-        let bcast_mask: [u8; 4] = port_bcast_mask.to_be_bytes();
+        let m = mask.as_bytes();
 
         let i2c_op = if is_read {
             // Defaulting to RandomRead, rather than Read, because RandomRead
@@ -157,11 +139,11 @@ impl Transceivers {
             TransceiverI2COperation::Write
         };
 
-        if (port_bcast_mask & 0xFFFF) > 0 {
+        if (mask & 0xFFFF) > 0 {
             let request = TransceiversI2CRequest {
                 reg,
                 num_bytes,
-                port_bcast_mask: [bcast_mask[1], bcast_mask[0]],
+                mask: [m[1], m[0]],
                 op: ((i2c_op as u8) << 1) | Reg::QSFP::I2C_CTRL::START,
             };
 
@@ -172,11 +154,11 @@ impl Transceivers {
             )?;
         }
 
-        if (port_bcast_mask & 0xFFFF0000) > 0 {
+        if (mask & 0xFFFF0000) > 0 {
             let request = TransceiversI2CRequest {
                 reg,
                 num_bytes,
-                port_bcast_mask: [bcast_mask[3], bcast_mask[2]],
+                mask: [m[3], m[2]],
                 op: ((i2c_op as u8) << 1) | Reg::QSFP::I2C_CTRL::START,
             };
             self.fpgas[1].write(
@@ -256,6 +238,6 @@ impl From<TransceiverI2COperation> for u8 {
 pub struct TransceiversI2CRequest {
     reg: u8,
     num_bytes: u8,
-    port_bcast_mask: [u8; 2],
+    mask: [u8; 2],
     op: u8,
 }

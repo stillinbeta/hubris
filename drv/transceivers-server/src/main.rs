@@ -31,44 +31,44 @@ impl idl::InOrderTransceiversImpl for ServerImpl {
     fn set_power_enable(
         &mut self,
         _msg: &userlib::RecvMessage,
-        port_bcast_mask: u32,
+        mask: u32,
     ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
         Ok(self
             .transceivers
-            .set_power_enable(port_bcast_mask)
+            .set_power_enable(mask)
             .map_err(TransceiversError::from)?)
     }
 
     fn clear_power_enable(
         &mut self,
         _msg: &userlib::RecvMessage,
-        port_bcast_mask: u32,
+        mask: u32,
     ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
         Ok(self
             .transceivers
-            .clear_power_enable(port_bcast_mask)
+            .clear_power_enable(mask)
             .map_err(TransceiversError::from)?)
     }
 
     fn set_reset(
         &mut self,
         _msg: &userlib::RecvMessage,
-        port_bcast_mask: u32,
+        mask: u32,
     ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
         Ok(self
             .transceivers
-            .set_reset(port_bcast_mask)
+            .set_reset(mask)
             .map_err(TransceiversError::from)?)
     }
 
     fn clear_reset(
         &mut self,
         _msg: &userlib::RecvMessage,
-        port_bcast_mask: u32,
+        mask: u32,
     ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
         Ok(self
             .transceivers
-            .clear_reset(port_bcast_mask)
+            .clear_reset(mask)
             .map_err(TransceiversError::from)?)
     }
 
@@ -78,11 +78,11 @@ impl idl::InOrderTransceiversImpl for ServerImpl {
         is_read: bool,
         reg: u8,
         num_bytes: u8,
-        port_bcast_mask: u32,
+        mask: u32,
     ) -> Result<(), idol_runtime::RequestError<TransceiversError>> {
         Ok(self
             .transceivers
-            .setup_i2c_op(is_read, reg, num_bytes, port_bcast_mask)
+            .setup_i2c_op(is_read, reg, num_bytes, mask)
             .map_err(TransceiversError::from)?)
     }
 
